@@ -8,12 +8,9 @@
     <meta name="theme-color" content="#1976D2">
     <title>Нормы цеха 188</title>
     
-    <!-- Иконки -->
     <link rel="icon" type="image/png" sizes="512x512" href="./icon.png">
     <link rel="apple-touch-icon" href="./icon.png">
     <link rel="apple-touch-icon" sizes="192x192" href="./icon.png">
-    
-    <!-- PWA Manifest -->
     <link rel="manifest" href="./manifest.json">
     
     <style>
@@ -52,38 +49,23 @@
             margin-bottom: 20px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
-        .actions-block h3 {
-            text-align: center;
-            color: #333;
-            margin-bottom: 12px;
-            font-size: 16px;
-        }
+        .actions-block h3 { text-align: center; color: #333; margin-bottom: 12px; font-size: 16px; }
         .action-btn {
-            width: 100%;
-            padding: 14px 20px;
-            border: none;
-            border-radius: 8px;
-            font-size: 15px;
-            font-weight: bold;
-            cursor: pointer;
-            margin-bottom: 10px;
-            color: white;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+            width: 100%; padding: 14px 20px; border: none; border-radius: 8px;
+            font-size: 15px; font-weight: bold; cursor: pointer; margin-bottom: 10px;
+            color: white; box-shadow: 0 2px 5px rgba(0,0,0,0.15);
         }
         .action-btn:last-child { margin-bottom: 0; }
         .sync-btn { background: #2196F3; }
-        .sync-btn:hover { background: #1976D2; }
         .export-btn { background: #FF9800; }
-        .export-btn:hover { background: #F57C00; }
         .clear-btn { background: #f44336; }
-        .clear-btn:hover { background: #d32f2f; }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1> Нормы цеха 188</h1>
-        <div class="status-bar" id="status-bar">🟢 Онлайн</div>
-        <div class="counter" id="counter" style="display: none;">⏳ Ожидает отправки: 0 записей</div>
+        <h1>📊 Нормы цеха 188</h1>
+        <div class="status-bar" id="status-bar"> Онлайн</div>
+        <div class="counter" id="counter" style="display: none;"> Ожидает отправки: 0 записей</div>
         <div id="cards"></div>
 
         <div class="actions-block">
@@ -94,18 +76,14 @@
         </div>
     </div>
 
-    <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
+    <!-- ВАЖНО: библиотека загружается асинхронно, чтобы не блокировать отрисовку -->
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js" onerror="window.xlsxFailed=true"></script>
+    
     <script>
-        // ===== РЕГИСТРАЦИЯ SERVICE WORKER (ИСПРАВЛЕНО) =====
+        // ===== РЕГИСТРАЦИЯ SERVICE WORKER =====
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./service-worker.js')
-                    .then(registration => {
-                        console.log('✅ Service Worker зарегистрирован:', registration.scope);
-                    })
-                    .catch(error => {
-                        console.log('❌ Ошибка регистрации Service Worker:', error);
-                    });
+                navigator.serviceWorker.register('./service-worker.js').catch(e => console.log('SW error:', e));
             });
         }
 
@@ -180,7 +158,7 @@
                     <div class="card-meta">Норма времени: ${item.time}</div>
                     <div class="input-group">
                         <input type="number" id="input-${index}" placeholder="Введите число" step="0.01">
-                        <button class="btn btn-add" onclick="addValue(${index})"> Добавить</button>
+                        <button class="btn btn-add" onclick="addValue(${index})">➕ Добавить</button>
                     </div>
                     ${item.values.length > 0 ? `
                         <div class="result">Расценка: ${item.values.join('+')}</div>
@@ -262,7 +240,7 @@
             const unsynced = getUnsyncedData();
             if (unsynced.length === 0) return alert('✅ Нет новых данных. Всё уже отправлено в Google Таблицу.');
             if (!navigator.onLine) return alert('🔴 Нет интернета! Подключитесь к сети.');
-            if (!confirm(` Отправить ${unsynced.length} новых записей в Google Таблицу?\n\nДанные останутся в приложении.`)) return;
+            if (!confirm(`📤 Отправить ${unsynced.length} новых записей в Google Таблицу?\n\nДанные останутся в приложении.`)) return;
             
             const success = await sendDataToGoogle(unsynced);
             if (success) { 
@@ -274,8 +252,13 @@
         }
 
         function downloadExcel() {
-            const data = loadData();
+            // Проверяем, загрузилась ли библиотека
+            if (typeof XLSX === 'undefined' || window.xlsxFailed) {
+                alert('⚠️ Для скачивания Excel нужен интернет!\n\nПодключитесь к сети и попробуйте снова.\n\nВвод данных и синхронизация работают без интернета.');
+                return;
+            }
             
+            const data = loadData();
             const wb = XLSX.utils.book_new();
             const wsData = [['ID', 'Наименование работ с диапазоном объемов (кг)', 'Норма времени', 'Расценка', 'Количество']];
             
@@ -310,7 +293,7 @@
             XLSX.utils.book_append_sheet(wb, ws, 'Нормы цеха 188');
             XLSX.writeFile(wb, `Нормы_188_${new Date().toISOString().split('T')[0]}.xlsx`);
             
-            alert('✅ Excel-файл скачан в папку "Загрузки"!\n\nДанные в приложении НЕ изменены.');
+            alert('✅ Excel-файл скачан в папку "Загрузки"!');
         }
 
         async function clearAll() {
@@ -318,10 +301,8 @@
             const hasData = data.some(item => item.values.length > 0);
             
             if (!hasData) return alert('✅ Приложение уже пустое. Нечего очищать.');
-            
-            if (!confirm('⚠️ ВНИМАНИЕ!\n\nЭто действие:\n1. Очистит Google Таблицу (столбцы Расценка и Количество)\n2. Очистит все данные в приложении\n\nВы уверены?')) return;
-            
-            if (!navigator.onLine) return alert('🔴 Нет интернета! Для очистки Google Таблицы нужно подключение.');
+            if (!confirm('⚠️ ВНИМАНИЕ!\n\nЭто действие:\n1. Очистит Google Таблицу\n2. Очистит все данные в приложении\n\nВы уверены?')) return;
+            if (!navigator.onLine) return alert(' Нет интернета! Для очистки Google Таблицы нужно подключение.');
             
             const cleared = await clearGoogleSheet();
             if (cleared) {
@@ -329,7 +310,7 @@
                 alert('🎉 Всё очищено! Приложение и Google Таблица готовы к новой смене.');
                 location.reload();
             } else {
-                alert(' Не удалось очистить Google Таблицу. Проверьте интернет.');
+                alert('❌ Не удалось очистить Google Таблицу.');
             }
         }
 
@@ -341,6 +322,8 @@
 
         window.addEventListener('online', updateStatus);
         window.addEventListener('offline', updateStatus);
+        
+        // ВАЖНО: отрисовываем карточки СРАЗУ, не ждём загрузки библиотеки
         render();
         updateStatus();
     </script>
