@@ -76,9 +76,8 @@
         </div>
     </div>
 
-    <!-- ВАЖНО: библиотека загружается асинхронно, чтобы не блокировать отрисовку -->
-    <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js" onerror="window.xlsxFailed=true"></script>
-    
+    <!-- БИБЛИОТЕКА УДАЛЕНА ОТСЮДА - она будет загружаться только при необходимости -->
+
     <script>
         // ===== РЕГИСТРАЦИЯ SERVICE WORKER =====
         if ('serviceWorker' in navigator) {
@@ -240,7 +239,7 @@
             const unsynced = getUnsyncedData();
             if (unsynced.length === 0) return alert('✅ Нет новых данных. Всё уже отправлено в Google Таблицу.');
             if (!navigator.onLine) return alert('🔴 Нет интернета! Подключитесь к сети.');
-            if (!confirm(`📤 Отправить ${unsynced.length} новых записей в Google Таблицу?\n\nДанные останутся в приложении.`)) return;
+            if (!confirm(` Отправить ${unsynced.length} новых записей в Google Таблицу?\n\nДанные останутся в приложении.`)) return;
             
             const success = await sendDataToGoogle(unsynced);
             if (success) { 
@@ -251,10 +250,31 @@
             }
         }
 
-        function downloadExcel() {
-            // Проверяем, загрузилась ли библиотека
-            if (typeof XLSX === 'undefined' || window.xlsxFailed) {
-                alert('⚠️ Для скачивания Excel нужен интернет!\n\nПодключитесь к сети и попробуйте снова.\n\nВвод данных и синхронизация работают без интернета.');
+        // ДИНАМИЧЕСКАЯ ЗАГРУЗКА БИБЛИОТЕКИ ТОЛЬКО КОГДА НУЖНА
+        function loadSheetJS() {
+            return new Promise((resolve, reject) => {
+                if (typeof XLSX !== 'undefined') {
+                    resolve();
+                    return;
+                }
+                const script = document.createElement('script');
+                script.src = 'https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js';
+                script.onload = () => resolve();
+                script.onerror = () => reject(new Error('Не удалось загрузить библиотеку Excel'));
+                document.head.appendChild(script);
+            });
+        }
+
+        async function downloadExcel() {
+            if (!navigator.onLine) {
+                alert('️ Для скачивания Excel нужен интернет!\n\nПодключитесь к сети и попробуйте снова.\n\nВвод данных и синхронизация работают без интернета.');
+                return;
+            }
+            
+            try {
+                await loadSheetJS();
+            } catch (error) {
+                alert('❌ Не удалось загрузить библиотеку Excel. Проверьте интернет.');
                 return;
             }
             
@@ -316,14 +336,14 @@
 
         function updateStatus() {
             const bar = document.getElementById('status-bar');
-            if (navigator.onLine) { bar.textContent = '🟢 Онлайн'; bar.className = 'status-bar'; } 
+            if (navigator.onLine) { bar.textContent = ' Онлайн'; bar.className = 'status-bar'; } 
             else { bar.textContent = '🔴 Оффлайн - данные сохраняются локально'; bar.className = 'status-bar offline'; }
         }
 
         window.addEventListener('online', updateStatus);
         window.addEventListener('offline', updateStatus);
         
-        // ВАЖНО: отрисовываем карточки СРАЗУ, не ждём загрузки библиотеки
+        // ОТРИСОВКА КАРТОЧЕК СРАЗУ - без зависимости от внешних скриптов
         render();
         updateStatus();
     </script>
