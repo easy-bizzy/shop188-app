@@ -6,22 +6,36 @@
     <title>Нормы цеха 188</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: Arial, sans-serif; background: #f5f5f5; padding: 15px; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; padding: 15px; }
         .container { max-width: 600px; margin: 0 auto; }
         h1 { text-align: center; color: #1976D2; margin-bottom: 15px; font-size: 22px; }
         .status-bar { background: #4CAF50; color: white; padding: 10px; border-radius: 8px; text-align: center; margin-bottom: 10px; font-size: 14px; }
+        .status-bar.offline { background: #f44336; }
         .counter { background: #FF9800; color: white; padding: 10px; border-radius: 8px; text-align: center; margin-bottom: 15px; font-size: 14px; font-weight: bold; }
         .card { background: white; border-radius: 10px; padding: 15px; margin-bottom: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        .card-header { font-weight: bold; font-size: 15px; margin-bottom: 8px; color: #333; }
+        .card-header { font-weight: bold; font-size: 15px; margin-bottom: 8px; color: #333; line-height: 1.3; }
         .card-number { display: inline-block; background: #1976D2; color: white; padding: 3px 10px; border-radius: 12px; font-size: 14px; font-weight: bold; margin-right: 8px; }
+        .card-meta { font-size: 13px; color: #666; margin-bottom: 10px; }
         .input-group { display: flex; gap: 8px; margin-bottom: 10px; }
         .input-group input { flex: 1; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 18px; text-align: center; }
+        .input-group input:focus { outline: none; border-color: #1976D2; }
         .btn { padding: 12px 20px; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; font-weight: bold; }
         .btn-add { background: #4CAF50; color: white; }
+        .btn-edit { background: #2196F3; color: white; margin-top: 8px; width: 100%; padding: 10px; }
         .result { background: #FFF2CC; padding: 10px; border-radius: 8px; text-align: center; font-size: 16px; font-weight: bold; margin-bottom: 8px; }
         .total { background: #C6EFCE; padding: 10px; border-radius: 8px; text-align: center; font-size: 18px; font-weight: bold; color: #006100; }
-        .actions-block { background: white; border-radius: 10px; padding: 15px; margin-top: 20px; }
-        .action-btn { width: 100%; padding: 14px 20px; border: none; border-radius: 8px; font-size: 15px; font-weight: bold; cursor: pointer; margin-bottom: 10px; color: white; }
+        .edit-section { display: none; margin-top: 10px; padding: 10px; background: #f9f9f9; border-radius: 8px; }
+        .edit-section.show { display: block; }
+        .edit-item { display: flex; gap: 5px; margin-bottom: 5px; align-items: center; }
+        .edit-item input { flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 5px; }
+        .btn-remove { background: #f44336; color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; }
+        .btn-save { background: #2196F3; color: white; width: 100%; margin-top: 10px; padding: 10px; }
+        .btn-close { background: #9e9e9e; color: white; width: 100%; margin-top: 5px; padding: 10px; }
+        
+        .actions-block { background: white; border-radius: 10px; padding: 15px; margin-top: 20px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .actions-block h3 { text-align: center; color: #333; margin-bottom: 12px; font-size: 16px; }
+        .action-btn { width: 100%; padding: 14px 20px; border: none; border-radius: 8px; font-size: 15px; font-weight: bold; cursor: pointer; margin-bottom: 10px; color: white; box-shadow: 0 2px 5px rgba(0,0,0,0.15); }
+        .action-btn:last-child { margin-bottom: 0; }
         .sync-btn { background: #2196F3; }
         .export-btn { background: #FF9800; }
         .clear-btn { background: #f44336; }
@@ -35,15 +49,14 @@
         <div id="cards"></div>
 
         <div class="actions-block">
-            <button class="action-btn sync-btn" onclick="runSync()">🔄 Синхронизировать</button>
-            <button class="action-btn export-btn" onclick="alert('Нужен интернет для Excel')">📥 Скачать Excel</button>
+            <h3>⚙️ Действия</h3>
+            <button class="action-btn sync-btn" onclick="runSync()">🔄 Синхронизировать с Google</button>
+            <button class="action-btn export-btn" onclick="downloadExcel()">📥 Скачать Excel</button>
             <button class="action-btn clear-btn" onclick="clearAll()">🗑️ Очистить всё</button>
         </div>
     </div>
 
     <script>
-        alert('Приложение загружено!');
-        
         const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzDlIa--ef_TrhkyyBJLxmGKv9KWCRhtV2y7rt9UY2SKDN7JGJpAelijBDAoqqKheOrew/exec';
 
         const defaultData = [
@@ -77,18 +90,29 @@
 
         function loadData() {
             const saved = localStorage.getItem('shop188_data');
-            if (saved) return JSON.parse(saved);
+            if (saved) return JSON.parse(saved).map(item => ({...item, synced: item.synced || false}));
             return defaultData;
         }
 
         function saveData(data) {
             localStorage.setItem('shop188_data', JSON.stringify(data));
+            updateCounter();
         }
 
         function calculateSum(values) { return values.reduce((sum, val) => sum + Number(val), 0); }
 
+        function updateCounter() {
+            const unsynced = getUnsyncedData().length;
+            const counter = document.getElementById('counter');
+            if (unsynced > 0) {
+                counter.textContent = '⏳ Ожидает отправки: ' + unsynced + ' записей';
+                counter.style.display = 'block';
+            } else {
+                counter.style.display = 'none';
+            }
+        }
+
         function render() {
-            alert('Функция render() вызвана!');
             const data = loadData();
             const container = document.getElementById('cards');
             container.innerHTML = '';
@@ -98,10 +122,30 @@
                 const sum = calculateSum(item.values);
                 const card = document.createElement('div');
                 card.className = 'card';
-                card.innerHTML = '<div class="card-header"><span class="card-number">№' + item.id + '</span> ' + item.name + '</div><div class="input-group"><input type="number" id="input-' + i + '" placeholder="Введите число"><button class="btn btn-add" onclick="addValue(' + i + ')">Добавить</button></div>' + (item.values.length > 0 ? '<div class="result">Расценка: ' + item.values.join('+') + '</div><div class="total">Количество: ' + sum + '</div>' : '');
+                
+                let html = '<div class="card-header"><span class="card-number">№' + item.id + '</span> ' + item.name;
+                if (item.synced) html += ' <span style="color: #4CAF50; font-size: 12px; margin-left: 5px;">✅</span>';
+                html += '</div>';
+                html += '<div class="card-meta">Норма времени: ' + item.time + '</div>';
+                html += '<div class="input-group"><input type="number" id="input-' + i + '" placeholder="Введите число" step="0.01">';
+                html += '<button class="btn btn-add" onclick="addValue(' + i + ')">➕ Добавить</button></div>';
+                
+                if (item.values.length > 0) {
+                    html += '<div class="result">Расценка: ' + item.values.join('+') + '</div>';
+                    html += '<div class="total">Количество: ' + sum + '</div>';
+                    html += '<button class="btn btn-edit" onclick="toggleEdit(' + i + ')">✏️ Редактировать значения</button>';
+                    html += '<div class="edit-section" id="edit-' + i + '">';
+                    for (let j = 0; j < item.values.length; j++) {
+                        html += '<div class="edit-item"><input type="number" value="' + item.values[j] + '" onchange="changeValue(' + i + ',' + j + ',this.value)" step="0.01">';
+                        html += '<button class="btn-remove" onclick="removeValue(' + i + ',' + j + ')">🗑️</button></div>';
+                    }
+                    html += '<button class="btn btn-save" onclick="toggleEdit(' + i + ')">Закрыть</button></div>';
+                }
+                
+                card.innerHTML = html;
                 container.appendChild(card);
             }
-            alert('Карточки отрисованы!');
+            updateCounter();
         }
 
         function addValue(index) {
@@ -110,24 +154,109 @@
             const value = Number(input.value);
             if (value !== 0) {
                 data[index].values.push(value);
+                data[index].synced = false;
                 saveData(data);
                 input.value = '';
                 render();
+            } else {
+                alert('Введите число');
             }
+        }
+
+        function toggleEdit(index) {
+            document.getElementById('edit-' + index).classList.toggle('show');
+        }
+
+        function changeValue(index, valueIndex, newValue) {
+            const data = loadData();
+            data[index].values[valueIndex] = Number(newValue);
+            data[index].synced = false;
+            saveData(data);
+            render();
+        }
+
+        function removeValue(index, valueIndex) {
+            const data = loadData();
+            data[index].values.splice(valueIndex, 1);
+            data[index].synced = false;
+            saveData(data);
+            render();
+        }
+
+        function getUnsyncedData() {
+            return loadData().filter(item => !item.synced && item.values.length > 0);
+        }
+
+        function markAsSynced() {
+            const data = loadData();
+            data.forEach(item => { if (item.values.length > 0) item.synced = true; });
+            saveData(data);
+            render();
+        }
+
+        async function sendDataToGoogle(dataToSend) {
+            try {
+                const rows = dataToSend.map(item => ({ id: item.id, name: item.name, time: item.time, price: item.values.join('+'), quantity: calculateSum(item.values) }));
+                await fetch(GOOGLE_SCRIPT_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ data: rows }) });
+                return true;
+            } catch (error) { return false; }
+        }
+
+        async function clearGoogleSheet() {
+            try {
+                await fetch(GOOGLE_SCRIPT_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'clear' }) });
+                return true;
+            } catch (error) { return false; }
         }
 
         async function runSync() {
-            alert('Синхронизация...');
-        }
-
-        async function clearAll() {
-            if (confirm('Очистить всё?')) {
-                localStorage.removeItem('shop188_data');
-                location.reload();
+            const unsynced = getUnsyncedData();
+            if (unsynced.length === 0) return alert('✅ Нет новых данных. Всё уже отправлено в Google Таблицу.');
+            if (!navigator.onLine) return alert('🔴 Нет интернета! Подключитесь к сети.');
+            if (!confirm(' Отправить ' + unsynced.length + ' новых записей в Google Таблицу?\n\nДанные останутся в приложении.')) return;
+            
+            const success = await sendDataToGoogle(unsynced);
+            if (success) { 
+                markAsSynced(); 
+                alert('✅ Данные успешно отправлены в Google Таблицу!\n\nПриложение НЕ очищено — можно продолжать работу.'); 
+            } else { 
+                alert('❌ Ошибка отправки. Проверьте интернет.'); 
             }
         }
 
+        function downloadExcel() {
+            alert('️ Для скачивания Excel нужен интернет!\n\nПодключитесь к сети и откройте приложение снова.');
+        }
+
+        async function clearAll() {
+            const data = loadData();
+            const hasData = data.some(item => item.values.length > 0);
+            
+            if (!hasData) return alert('✅ Приложение уже пустое. Нечего очищать.');
+            if (!confirm('⚠️ ВНИМАНИЕ!\n\nЭто действие:\n1. Очистит Google Таблицу\n2. Очистит все данные в приложении\n\nВы уверены?')) return;
+            if (!navigator.onLine) return alert('🔴 Нет интернета! Для очистки Google Таблицы нужно подключение.');
+            
+            const cleared = await clearGoogleSheet();
+            if (cleared) {
+                localStorage.removeItem('shop188_data');
+                alert('🎉 Всё очищено! Приложение и Google Таблица готовы к новой смене.');
+                location.reload();
+            } else {
+                alert('❌ Не удалось очистить Google Таблицу.');
+            }
+        }
+
+        function updateStatus() {
+            const bar = document.getElementById('status-bar');
+            if (navigator.onLine) { bar.textContent = '🟢 Онлайн'; bar.className = 'status-bar'; } 
+            else { bar.textContent = '🔴 Оффлайн - данные сохраняются локально'; bar.className = 'status-bar offline'; }
+        }
+
+        window.addEventListener('online', updateStatus);
+        window.addEventListener('offline', updateStatus);
+        
         render();
+        updateStatus();
     </script>
 </body>
 </html>
