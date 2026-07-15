@@ -215,7 +215,7 @@
         async function exportAndReset() {
             const data = loadData();
             const unsynced = getUnsyncedData();
-            if (!confirm('⚠️ Сохранить в Google, скачать Excel и сбросить приложение?')) return;
+            if (!confirm('⚠️ Сохранить в Google, скачать ПОЛНУЮ таблицу в Excel и сбросить приложение?')) return;
 
             let googleSynced = false;
             if (navigator.onLine && unsynced.length > 0) {
@@ -225,24 +225,28 @@
                 googleSynced = true;
             }
 
+            // --- ИЗМЕНЕНИЕ ЗДЕСЬ: Создаем Excel со ВСЕМИ 26 строками ---
             const wb = XLSX.utils.book_new();
             const wsData = [['ID', 'Наименование работ', 'Норма времени', 'Расценка', 'Количество']];
+            
+            // Проходим по ВСЕМ элементам, даже если values пустой
             data.forEach(item => {
-                if (item.values.length > 0) {
-                    wsData.push([item.id, item.name, item.time, item.values.join('+'), calculateSum(item.values)]);
-                }
+                const priceStr = item.values.length > 0 ? item.values.join('+') : "";
+                const sum = calculateSum(item.values);
+                wsData.push([item.id, item.name, item.time, priceStr, sum]);
             });
+            
             XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(wsData), 'Нормы цеха 188');
             XLSX.writeFile(wb, `Нормы_188_${new Date().toISOString().split('T')[0]}.xlsx`);
 
             setTimeout(() => {
                 if (googleSynced) {
-                    if (confirm('✅ Сохранено в Google и Excel скачан!\n\nОчистить приложение для новой смены?')) {
+                    if (confirm('✅ Сохранено в Google и полная таблица Excel скачана!\n\nОчистить приложение для новой смены?')) {
                         localStorage.removeItem('shop188_data');
                         location.reload();
                     }
                 } else {
-                    alert('⚠️ Google Таблица не обновлена (нет интернета или ошибка).\n\nНо Excel-файл скачан в "Загрузки" - данные в безопасности!\nПриложение НЕ очищено.');
+                    alert('⚠️ Google Таблица не обновлена (нет интернета или ошибка).\n\nНо полная таблица Excel скачана в "Загрузки" - данные в безопасности!\nПриложение НЕ очищено.');
                 }
             }, 1000);
         }
