@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <title>Нормы цеха 188</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f5;
+            padding: 15px;
+            padding-bottom: 100px;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        h1 {
+            text-align: center;
+            color: #1976D2;
+            margin-bottom: 15px;
+            font-size: 22px;
+        }
+        .status-bar {
+            background: #4CAF50;
+            color: white;
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+            margin-bottom: 15px;
+            font-size: 14px;
+        }
+        .status-bar.offline {
+            background: #f44336;
+        }
+        .card {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .card-header {
+            font-weight: bold;
+            font-size: 15px;
+            margin-bottom: 8px;
+            color: #333;
+            line-height: 1.3;
+        }
+        .card-meta {
+            font-size: 13px;
+            color: #666;
+            margin-bottom: 10px;
+        }
+        .input-group {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+        .input-group input {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 18px;
+            text-align: center;
+        }
+        .input-group input:focus {
+            outline: none;
+            border-color: #1976D2;
+        }
+        .btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .btn-add {
+            background: #4CAF50;
+            color: white;
+        }
+        .btn-add:hover {
+            background: #45a049;
+        }
+        .btn-edit {
+            background: #2196F3;
+            color: white;
+            margin-top: 8px;
+            width: 100%;
+            padding: 10px;
+        }
+        .result {
+            background: #FFF2CC;
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        .total {
+            background: #C6EFCE;
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+            color: #006100;
+        }
+        .edit-section {
+            display: none;
+            margin-top: 10px;
+            padding: 10px;
+            background: #f9f9f9;
+            border-radius: 8px;
+        }
+        .edit-section.show {
+            display: block;
+        }
+        .edit-item {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 5px;
+            align-items: center;
+        }
+        .edit-item input {
+            flex: 1;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .btn-remove {
+            background: #f44336;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .btn-save {
+            background: #2196F3;
+            color: white;
+            width: 100%;
+            margin-top: 10px;
+            padding: 10px;
+        }
+        .btn-close {
+            background: #9e9e9e;
+            color: white;
+            width: 100%;
+            margin-top: 5px;
+            padding: 10px;
+        }
+        .sync-btn {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #FF9800;
+            color: white;
+            padding: 15px 30px;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: bold;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            cursor: pointer;
+            display: none;
+            z-index: 1000;
+        }
+        .sync-btn.show {
+            display: block;
+        }
+        .sync-btn:hover {
+            background: #F57C00;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📊 Нормы цеха 188</h1>
+        <div class="status-bar" id="status-bar">
+            🟢 Онлайн
+        </div>
+        <div id="cards"></div>
+    </div>
+
+    <button class="sync-btn" id="sync-btn" onclick="syncData()">
+        🔄 Синхронизировать данные
+    </button>
+
+    <script src="sync.js"></script>
+    <script>
+        // Данные
+        const defaultData = [
+            {id: 1, name: "10-300 Перемещение, укладка тары эл штабелером", time: 0.28, values: []},
+            {id: 2, name: "50-300 Перемещение по скл кран-балкой", time: 0.34, values: []},
+            {id: 3, name: "50-450 Погрузка, выгрузка кран-балкой", time: 0.34, values: []},
+            {id: 4, name: "10-300 Погрузка, выгрузка пленки вручную", time: 0.56, values: []},
+            {id: 5, name: "50-300 Перемещение по скл рохлей", time: 0.28, values: []},
+            {id: 6, name: "50-500 Подъем, перемещение, укладка ПКИ эл штабелером", time: 0.28, values: []},
+            {id: 7, name: "10-300 Подъем, перемещение, укладка ПКИ тележкой", time: 0.28, values: []},
+            {id: 8, name: "50-300 Выгрузка ПКИ из машины эл. штабелером", time: 0.36, values: []},
+            {id: 9, name: "10-50 Погрузка, выгрузка материалов вручную", time: 0.58, values: []},
+            {id: 10, name: "10-50 Погрузка, выгрузка материалов эл штабелером", time: 0.3, values: []},
+            {id: 11, name: "10-50 Погрузка, выгрузка материалов тележкой", time: 0.36, values: []},
+            {id: 12, name: "50-250 Перемещение материалов тележкой", time: 0.28, values: []},
+            {id: 13, name: "50-250 Перемещение материалов эл штабелером", time: 0.28, values: []},
+            {id: 14, name: "10-50 Перемещение материалов вручную", time: 0.28, values: []},
+            {id: 15, name: "10-200 Выгрузка-погрузка ТМЦ вручную", time: 0.51, values: []},
+            {id: 16, name: "10-100 Укладка ТМЦ вручную", time: 0.42, values: []},
+            {id: 17, name: "10-50 Погрузка выгрузка бочек", time: 0.53, values: []},
+            {id: 18, name: "30-300 Выдача ТМЦ в цех рохлей", time: 0.51, values: []},
+            {id: 19, name: "250-500 Выдача ТМЦ в цех с помощью электроштабелера", time: 0.36, values: []},
+            {id: 20, name: "100-500 Выгрузка-погрузка препрега с помощью рохли", time: 0.30, values: []},
+            {id: 21, name: "100-500 Перемещение и укладка препрега с помощью рохли", time: 0.28, values: []},
+            {id: 22, name: "100-300 Погрузка-выгрузка ящиков БПЛА с помощью крана", time: 0.26, values: []},
+            {id: 23, name: "10-300 Укладка, сортировка и перемещение ящиков БПЛА вручную", time: 0.25, values: []},
+            {id: 24, name: "пленка машиной", time: 0.0, values: []},
+            {id: 25, name: "Стружка машиной", time: 0.0, values: []},
+            {id: 26, name: "картон машиной", time: 0.0, values: []}
+        ];
+
+        // Загрузка данных
+        function loadData() {
+            const saved = localStorage.getItem('shop188_data');
+            return saved ? JSON.parse(saved) : defaultData;
+        }
+
+        // Сохранение данных
+        function saveData(data) {
+            localStorage.setItem('shop188_data', JSON.stringify(data));
+            checkSyncStatus();
+        }
+
+        // Подсчет суммы
+        function calculateSum(values) {
+            return values.reduce((sum, val) => sum + Number(val), 0);
+        }
+
+        // Отрисовка карточек
+        function render() {
+            const data = loadData();
+            const container = document.getElementById('cards');
+            container.innerHTML = '';
+
+            data.forEach((item, index) => {
+                const sum = calculateSum(item.values);
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.innerHTML = `
+                    <div class="card-header">${item.name}</div>
+                    <div class="card-meta">Норма времени: ${item.time}</div>
+                    <div class="input-group">
+                        <input type="number" id="input-${index}" placeholder="Введите число" step="0.01">
+                        <button class="btn btn-add" onclick="addValue(${index})">➕ Добавить</button>
+                    </div>
+                    ${item.values.length > 0 ? `
+                        <div class="result">Расценка: ${item.values.join('+')}</div>
+                        <div class="total">Количество: ${sum}</div>
+                        <button class="btn btn-edit" onclick="toggleEdit(${index})">✏️ Редактировать значения</button>
+                        <div class="edit-section" id="edit-${index}">
+                            ${item.values.map((val, i) => `
+                                <div class="edit-item">
+                                    <input type="number" value="${val}" onchange="changeValue(${index}, ${i}, this.value)" step="0.01">
+                                    <button class="btn-remove" onclick="removeValue(${index}, ${i})">️</button>
+                                </div>
+                            `).join('')}
+                            <button class="btn btn-save" onclick="saveEdit(${index})">💾 Сохранить</button>
+                            <button class="btn btn-close" onclick="toggleEdit(${index})">Закрыть</button>
+                        </div>
+                    ` : ''}
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // Добавить значение
+        function addValue(index) {
+            const data = loadData();
+            const input = document.getElementById(`input-${index}`);
+            const value = Number(input.value);
+            
+            if (value !== 0) {
+                data[index].values.push(value);
+                saveData(data);
+                input.value = '';
+                render();
+            } else {
+                alert('Введите число');
+            }
+        }
+
+        // Переключить редактирование
+        function toggleEdit(index) {
+            const editSection = document.getElementById(`edit-${index}`);
+            editSection.classList.toggle('show');
+        }
+
+        // Изменить значение
+        function changeValue(index, valueIndex, newValue) {
+            const data = loadData();
+            data[index].values[valueIndex] = Number(newValue);
+            saveData(data);
+            render();
+        }
+
+        // Удалить значение
+        function removeValue(index, valueIndex) {
+            const data = loadData();
+            data[index].values.splice(valueIndex, 1);
+            saveData(data);
+            render();
+        }
+
+        // Сохранить редактирование
+        function saveEdit(index) {
+            toggleEdit(index);
+        }
+
+        // Проверка статуса синхронизации
+        function checkSyncStatus() {
+            const lastSync = localStorage.getItem('last_sync');
+            const hasData = localStorage.getItem('shop188_data');
+            const syncBtn = document.getElementById('sync-btn');
+            
+            if (hasData && (!lastSync || new Date(lastSync) < new Date(Date.now() - 3600000))) {
+                syncBtn.classList.add('show');
+            } else {
+                syncBtn.classList.remove('show');
+            }
+        }
+
+        // Проверка онлайн/оффлайн
+        function updateStatus() {
+            const statusBar = document.getElementById('status-bar');
+            if (navigator.onLine) {
+                statusBar.textContent = '🟢 Онлайн';
+                statusBar.className = 'status-bar';
+            } else {
+                statusBar.textContent = '🔴 Оффлайн - данные сохраняются локально';
+                statusBar.className = 'status-bar offline';
+            }
+        }
+
+        window.addEventListener('online', updateStatus);
+        window.addEventListener('offline', updateStatus);
+
+        // Инициализация
+        render();
+        updateStatus();
+        checkSyncStatus();
+    </script>
+</body>
+</html>
