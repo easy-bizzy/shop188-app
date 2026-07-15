@@ -2,60 +2,26 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="theme-color" content="#1976D2">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Нормы цеха 188</title>
-    
-    <link rel="icon" type="image/png" sizes="512x512" href="./icon.png">
-    <link rel="apple-touch-icon" href="./icon.png">
-    <link rel="apple-touch-icon" sizes="192x192" href="./icon.png">
-    <link rel="manifest" href="./manifest.json">
-    
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; padding: 15px; }
+        body { font-family: Arial, sans-serif; background: #f5f5f5; padding: 15px; }
         .container { max-width: 600px; margin: 0 auto; }
         h1 { text-align: center; color: #1976D2; margin-bottom: 15px; font-size: 22px; }
         .status-bar { background: #4CAF50; color: white; padding: 10px; border-radius: 8px; text-align: center; margin-bottom: 10px; font-size: 14px; }
-        .status-bar.offline { background: #f44336; }
         .counter { background: #FF9800; color: white; padding: 10px; border-radius: 8px; text-align: center; margin-bottom: 15px; font-size: 14px; font-weight: bold; }
         .card { background: white; border-radius: 10px; padding: 15px; margin-bottom: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        .card-header { font-weight: bold; font-size: 15px; margin-bottom: 8px; color: #333; line-height: 1.3; }
+        .card-header { font-weight: bold; font-size: 15px; margin-bottom: 8px; color: #333; }
         .card-number { display: inline-block; background: #1976D2; color: white; padding: 3px 10px; border-radius: 12px; font-size: 14px; font-weight: bold; margin-right: 8px; }
-        .card-meta { font-size: 13px; color: #666; margin-bottom: 10px; }
         .input-group { display: flex; gap: 8px; margin-bottom: 10px; }
         .input-group input { flex: 1; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 18px; text-align: center; }
-        .input-group input:focus { outline: none; border-color: #1976D2; }
         .btn { padding: 12px 20px; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; font-weight: bold; }
         .btn-add { background: #4CAF50; color: white; }
-        .btn-edit { background: #2196F3; color: white; margin-top: 8px; width: 100%; padding: 10px; }
         .result { background: #FFF2CC; padding: 10px; border-radius: 8px; text-align: center; font-size: 16px; font-weight: bold; margin-bottom: 8px; }
         .total { background: #C6EFCE; padding: 10px; border-radius: 8px; text-align: center; font-size: 18px; font-weight: bold; color: #006100; }
-        .edit-section { display: none; margin-top: 10px; padding: 10px; background: #f9f9f9; border-radius: 8px; }
-        .edit-section.show { display: block; }
-        .edit-item { display: flex; gap: 5px; margin-bottom: 5px; align-items: center; }
-        .edit-item input { flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 5px; }
-        .btn-remove { background: #f44336; color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; }
-        .btn-save { background: #2196F3; color: white; width: 100%; margin-top: 10px; padding: 10px; }
-        .btn-close { background: #9e9e9e; color: white; width: 100%; margin-top: 5px; padding: 10px; }
-        
-        .actions-block {
-            background: white;
-            border-radius: 10px;
-            padding: 15px;
-            margin-top: 20px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
-        .actions-block h3 { text-align: center; color: #333; margin-bottom: 12px; font-size: 16px; }
-        .action-btn {
-            width: 100%; padding: 14px 20px; border: none; border-radius: 8px;
-            font-size: 15px; font-weight: bold; cursor: pointer; margin-bottom: 10px;
-            color: white; box-shadow: 0 2px 5px rgba(0,0,0,0.15);
-        }
-        .action-btn:last-child { margin-bottom: 0; }
+        .actions-block { background: white; border-radius: 10px; padding: 15px; margin-top: 20px; }
+        .action-btn { width: 100%; padding: 14px 20px; border: none; border-radius: 8px; font-size: 15px; font-weight: bold; cursor: pointer; margin-bottom: 10px; color: white; }
         .sync-btn { background: #2196F3; }
         .export-btn { background: #FF9800; }
         .clear-btn { background: #f44336; }
@@ -65,27 +31,19 @@
     <div class="container">
         <h1>📊 Нормы цеха 188</h1>
         <div class="status-bar" id="status-bar"> Онлайн</div>
-        <div class="counter" id="counter" style="display: none;"> Ожидает отправки: 0 записей</div>
+        <div class="counter" id="counter" style="display: none;">⏳ Ожидает отправки: 0 записей</div>
         <div id="cards"></div>
 
         <div class="actions-block">
-            <h3>⚙️ Действия</h3>
-            <button class="action-btn sync-btn" onclick="runSync()">🔄 Синхронизировать с Google</button>
-            <button class="action-btn export-btn" onclick="downloadExcel()">📥 Скачать Excel</button>
+            <button class="action-btn sync-btn" onclick="runSync()">🔄 Синхронизировать</button>
+            <button class="action-btn export-btn" onclick="alert('Нужен интернет для Excel')">📥 Скачать Excel</button>
             <button class="action-btn clear-btn" onclick="clearAll()">🗑️ Очистить всё</button>
         </div>
     </div>
 
-    <!-- БИБЛИОТЕКА УДАЛЕНА ОТСЮДА - она будет загружаться только при необходимости -->
-
     <script>
-        // ===== РЕГИСТРАЦИЯ SERVICE WORKER =====
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./service-worker.js').catch(e => console.log('SW error:', e));
-            });
-        }
-
+        alert('Приложение загружено!');
+        
         const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzDlIa--ef_TrhkyyBJLxmGKv9KWCRhtV2y7rt9UY2SKDN7JGJpAelijBDAoqqKheOrew/exec';
 
         const defaultData = [
@@ -119,233 +77,57 @@
 
         function loadData() {
             const saved = localStorage.getItem('shop188_data');
-            if (saved) return JSON.parse(saved).map(item => ({...item, synced: item.synced || false}));
+            if (saved) return JSON.parse(saved);
             return defaultData;
         }
 
         function saveData(data) {
             localStorage.setItem('shop188_data', JSON.stringify(data));
-            updateCounter();
         }
 
         function calculateSum(values) { return values.reduce((sum, val) => sum + Number(val), 0); }
 
-        function updateCounter() {
-            const unsynced = getUnsyncedData().length;
-            const counter = document.getElementById('counter');
-            if (unsynced > 0) {
-                counter.textContent = `⏳ Ожидает отправки: ${unsynced} записей`;
-                counter.style.display = 'block';
-            } else {
-                counter.style.display = 'none';
-            }
-        }
-
         function render() {
+            alert('Функция render() вызвана!');
             const data = loadData();
             const container = document.getElementById('cards');
             container.innerHTML = '';
-            data.forEach((item, index) => {
+            
+            for (let i = 0; i < data.length; i++) {
+                const item = data[i];
                 const sum = calculateSum(item.values);
                 const card = document.createElement('div');
                 card.className = 'card';
-                card.innerHTML = `
-                    <div class="card-header">
-                        <span class="card-number">№${item.id}</span> ${item.name}
-                        ${item.synced ? '<span style="color: #4CAF50; font-size: 12px; margin-left: 5px;">✅</span>' : ''}
-                    </div>
-                    <div class="card-meta">Норма времени: ${item.time}</div>
-                    <div class="input-group">
-                        <input type="number" id="input-${index}" placeholder="Введите число" step="0.01">
-                        <button class="btn btn-add" onclick="addValue(${index})">➕ Добавить</button>
-                    </div>
-                    ${item.values.length > 0 ? `
-                        <div class="result">Расценка: ${item.values.join('+')}</div>
-                        <div class="total">Количество: ${sum}</div>
-                        <button class="btn btn-edit" onclick="toggleEdit(${index})">✏️ Редактировать значения</button>
-                        <div class="edit-section" id="edit-${index}">
-                            ${item.values.map((val, i) => `
-                                <div class="edit-item">
-                                    <input type="number" value="${val}" onchange="changeValue(${index}, ${i}, this.value)" step="0.01">
-                                    <button class="btn-remove" onclick="removeValue(${index}, ${i})">🗑️</button>
-                                </div>
-                            `).join('')}
-                            <button class="btn btn-save" onclick="toggleEdit(${index})">Закрыть</button>
-                        </div>
-                    ` : ''}
-                `;
+                card.innerHTML = '<div class="card-header"><span class="card-number">№' + item.id + '</span> ' + item.name + '</div><div class="input-group"><input type="number" id="input-' + i + '" placeholder="Введите число"><button class="btn btn-add" onclick="addValue(' + i + ')">Добавить</button></div>' + (item.values.length > 0 ? '<div class="result">Расценка: ' + item.values.join('+') + '</div><div class="total">Количество: ' + sum + '</div>' : '');
                 container.appendChild(card);
-            });
-            updateCounter();
+            }
+            alert('Карточки отрисованы!');
         }
 
         function addValue(index) {
             const data = loadData();
-            const input = document.getElementById(`input-${index}`);
+            const input = document.getElementById('input-' + index);
             const value = Number(input.value);
             if (value !== 0) {
                 data[index].values.push(value);
-                data[index].synced = false;
                 saveData(data);
                 input.value = '';
                 render();
-            } else { alert('Введите число'); }
-        }
-
-        function toggleEdit(index) { document.getElementById(`edit-${index}`).classList.toggle('show'); }
-        function changeValue(index, valueIndex, newValue) {
-            const data = loadData();
-            data[index].values[valueIndex] = Number(newValue);
-            data[index].synced = false;
-            saveData(data);
-            render();
-        }
-        function removeValue(index, valueIndex) {
-            const data = loadData();
-            data[index].values.splice(valueIndex, 1);
-            data[index].synced = false;
-            saveData(data);
-            render();
-        }
-
-        function getUnsyncedData() { return loadData().filter(item => !item.synced && item.values.length > 0); }
-        function markAsSynced() {
-            const data = loadData();
-            data.forEach(item => { if (item.values.length > 0) item.synced = true; });
-            saveData(data);
-            render();
-        }
-
-        async function sendDataToGoogle(dataToSend) {
-            try {
-                const rows = dataToSend.map(item => ({ id: item.id, name: item.name, time: item.time, price: item.values.join('+'), quantity: calculateSum(item.values) }));
-                await fetch(GOOGLE_SCRIPT_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ data: rows }) });
-                return true;
-            } catch (error) { return false; }
-        }
-
-        async function clearGoogleSheet() {
-            try {
-                await fetch(GOOGLE_SCRIPT_URL, {
-                    method: 'POST', mode: 'no-cors',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ action: 'clear' })
-                });
-                return true;
-            } catch (error) { return false; }
+            }
         }
 
         async function runSync() {
-            const unsynced = getUnsyncedData();
-            if (unsynced.length === 0) return alert('✅ Нет новых данных. Всё уже отправлено в Google Таблицу.');
-            if (!navigator.onLine) return alert('🔴 Нет интернета! Подключитесь к сети.');
-            if (!confirm(` Отправить ${unsynced.length} новых записей в Google Таблицу?\n\nДанные останутся в приложении.`)) return;
-            
-            const success = await sendDataToGoogle(unsynced);
-            if (success) { 
-                markAsSynced(); 
-                alert('✅ Данные успешно отправлены в Google Таблицу!\n\nПриложение НЕ очищено — можно продолжать работу.'); 
-            } else { 
-                alert('❌ Ошибка отправки. Проверьте интернет.'); 
-            }
-        }
-
-        // ДИНАМИЧЕСКАЯ ЗАГРУЗКА БИБЛИОТЕКИ ТОЛЬКО КОГДА НУЖНА
-        function loadSheetJS() {
-            return new Promise((resolve, reject) => {
-                if (typeof XLSX !== 'undefined') {
-                    resolve();
-                    return;
-                }
-                const script = document.createElement('script');
-                script.src = 'https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js';
-                script.onload = () => resolve();
-                script.onerror = () => reject(new Error('Не удалось загрузить библиотеку Excel'));
-                document.head.appendChild(script);
-            });
-        }
-
-        async function downloadExcel() {
-            if (!navigator.onLine) {
-                alert('️ Для скачивания Excel нужен интернет!\n\nПодключитесь к сети и попробуйте снова.\n\nВвод данных и синхронизация работают без интернета.');
-                return;
-            }
-            
-            try {
-                await loadSheetJS();
-            } catch (error) {
-                alert('❌ Не удалось загрузить библиотеку Excel. Проверьте интернет.');
-                return;
-            }
-            
-            const data = loadData();
-            const wb = XLSX.utils.book_new();
-            const wsData = [['ID', 'Наименование работ с диапазоном объемов (кг)', 'Норма времени', 'Расценка', 'Количество']];
-            
-            data.forEach(item => {
-                const priceStr = item.values.length > 0 ? item.values.join('+') : "";
-                wsData.push([item.id, item.name, item.time, priceStr, calculateSum(item.values)]);
-            });
-            
-            const ws = XLSX.utils.aoa_to_sheet(wsData);
-            ws['!cols'] = [{ wch: 5 }, { wch: 60 }, { wch: 14 }, { wch: 55 }, { wch: 14 }];
-            
-            const range = XLSX.utils.decode_range(ws['!ref']);
-            for (let R = 1; R <= range.e.r; ++R) {
-                for (let C = 0; C <= range.e.c; ++C) {
-                    const cell = ws[XLSX.utils.encode_cell({r: R, c: C})];
-                    if (cell) {
-                        cell.s = {
-                            font: { name: 'Times New Roman', sz: 9 },
-                            alignment: { wrapText: (C === 1 || C === 3), vertical: 'center', horizontal: (C === 0 || C === 2 || C === 4) ? 'center' : 'left' }
-                        };
-                    }
-                }
-            }
-            for (let C = 0; C <= range.e.c; ++C) {
-                const cell = ws[XLSX.utils.encode_cell({r: 0, c: C})];
-                if (cell) cell.s = { font: { name: 'Times New Roman', sz: 10, bold: true }, alignment: { wrapText: true, vertical: 'center', horizontal: 'center' } };
-            }
-
-            ws['!margins'] = { left: 0.3, right: 0.3, top: 0.3, bottom: 0.3, header: 0.2, footer: 0.2 };
-            ws['!pagesetup'] = { paperSize: 9, orientation: 2, fitToPage: true, fitToWidth: 1, fitToHeight: 1 };
-
-            XLSX.utils.book_append_sheet(wb, ws, 'Нормы цеха 188');
-            XLSX.writeFile(wb, `Нормы_188_${new Date().toISOString().split('T')[0]}.xlsx`);
-            
-            alert('✅ Excel-файл скачан в папку "Загрузки"!');
+            alert('Синхронизация...');
         }
 
         async function clearAll() {
-            const data = loadData();
-            const hasData = data.some(item => item.values.length > 0);
-            
-            if (!hasData) return alert('✅ Приложение уже пустое. Нечего очищать.');
-            if (!confirm('⚠️ ВНИМАНИЕ!\n\nЭто действие:\n1. Очистит Google Таблицу\n2. Очистит все данные в приложении\n\nВы уверены?')) return;
-            if (!navigator.onLine) return alert(' Нет интернета! Для очистки Google Таблицы нужно подключение.');
-            
-            const cleared = await clearGoogleSheet();
-            if (cleared) {
+            if (confirm('Очистить всё?')) {
                 localStorage.removeItem('shop188_data');
-                alert('🎉 Всё очищено! Приложение и Google Таблица готовы к новой смене.');
                 location.reload();
-            } else {
-                alert('❌ Не удалось очистить Google Таблицу.');
             }
         }
 
-        function updateStatus() {
-            const bar = document.getElementById('status-bar');
-            if (navigator.onLine) { bar.textContent = ' Онлайн'; bar.className = 'status-bar'; } 
-            else { bar.textContent = '🔴 Оффлайн - данные сохраняются локально'; bar.className = 'status-bar offline'; }
-        }
-
-        window.addEventListener('online', updateStatus);
-        window.addEventListener('offline', updateStatus);
-        
-        // ОТРИСОВКА КАРТОЧЕК СРАЗУ - без зависимости от внешних скриптов
         render();
-        updateStatus();
     </script>
 </body>
 </html>
