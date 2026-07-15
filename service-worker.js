@@ -1,39 +1,40 @@
-const CACHE_NAME = 'shop188-v1';
+const CACHE_NAME = 'shop188-v2';
 const urlsToCache = [
-  '/',
-  '/index.html',
-  '/manifest.json',
-  '/icon.png',
-  'https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js'
+  './',
+  './index.html',
+  './manifest.json',
+  './icon.png'
 ];
 
-// Установка Service Worker и кэширование файлов
+// Установка Service Worker
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => {
-        console.log('Кэширование файлов...');
-        return cache.addAll(urlsToCache);
+        console.log('✅ Кэширование файлов...');
+        return cache.addAll(urlsToCache.map(url => new URL(url, location.href).href));
       })
+      .then(() => self.skipWaiting())
   );
 });
 
-// Перехват запросов и отдача из кэша
+// Перехват запросов
 self.addEventListener('fetch', event => {
   event.respondWith(
     caches.match(event.request)
       .then(response => {
-        // Если файл есть в кэше - отдаём его
         if (response) {
           return response;
         }
-        // Если нет - загружаем из интернета
-        return fetch(event.request);
+        return fetch(event.request).catch(error => {
+          console.log('❌ Ошибка загрузки:', error);
+          return new Response('Offline');
+        });
       })
   );
 });
 
-// Обновление кэша при изменении версии
+// Активация
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(cacheNames => {
@@ -44,6 +45,6 @@ self.addEventListener('activate', event => {
           }
         })
       );
-    })
+    }).then(() => self.clients.claim())
   );
 });
