@@ -7,11 +7,12 @@
     <title>Нормы цеха 188</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; padding: 15px; padding-bottom: 160px; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; padding: 15px; padding-bottom: 220px; }
         .container { max-width: 600px; margin: 0 auto; }
         h1 { text-align: center; color: #1976D2; margin-bottom: 15px; font-size: 22px; }
         .status-bar { background: #4CAF50; color: white; padding: 10px; border-radius: 8px; text-align: center; margin-bottom: 15px; font-size: 14px; }
         .status-bar.offline { background: #f44336; }
+        .counter { background: #FF9800; color: white; padding: 8px; border-radius: 8px; text-align: center; margin-bottom: 15px; font-size: 14px; font-weight: bold; }
         .card { background: white; border-radius: 10px; padding: 15px; margin-bottom: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         .card-header { font-weight: bold; font-size: 15px; margin-bottom: 8px; color: #333; line-height: 1.3; }
         .card-number { display: inline-block; background: #1976D2; color: white; padding: 3px 10px; border-radius: 12px; font-size: 14px; font-weight: bold; margin-right: 8px; }
@@ -31,25 +32,26 @@
         .btn-remove { background: #f44336; color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; }
         .btn-save { background: #2196F3; color: white; width: 100%; margin-top: 10px; padding: 10px; }
         .btn-close { background: #9e9e9e; color: white; width: 100%; margin-top: 5px; padding: 10px; }
-        .action-btn { position: fixed; left: 50%; transform: translateX(-50%); color: white; padding: 15px 20px; border-radius: 25px; font-size: 15px; font-weight: bold; box-shadow: 0 4px 10px rgba(0,0,0,0.3); cursor: pointer; display: none; z-index: 1000; border: none; width: 90%; max-width: 500px; text-align: center; }
-        .sync-btn { bottom: 80px; background: #FF9800; }
-        .export-btn { bottom: 20px; background: #9C27B0; }
-        .action-btn.show { display: block; }
+        .action-btn { position: fixed; left: 50%; transform: translateX(-50%); color: white; padding: 14px 20px; border-radius: 25px; font-size: 14px; font-weight: bold; box-shadow: 0 4px 10px rgba(0,0,0,0.3); cursor: pointer; z-index: 1000; border: none; width: 90%; max-width: 500px; text-align: center; }
+        .sync-btn { bottom: 140px; background: #2196F3; }
+        .export-btn { bottom: 80px; background: #FF9800; }
+        .clear-btn { bottom: 20px; background: #f44336; }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>📊 Нормы цеха 188</h1>
-        <div class="status-bar" id="status-bar">🟢 Онлайн</div>
+        <div class="status-bar" id="status-bar"> Онлайн</div>
+        <div class="counter" id="counter" style="display: none;"> Ожидает отправки: 0 записей</div>
         <div id="cards"></div>
     </div>
 
     <button class="action-btn sync-btn" id="sync-btn" onclick="runSync()">🔄 Синхронизировать с Google</button>
-    <button class="action-btn export-btn" id="export-btn" onclick="exportAndReset()">💾 Сохранить в Google, скачать Excel (А4 альбомная) и сбросить</button>
+    <button class="action-btn export-btn" id="export-btn" onclick="downloadExcel()">📥 Скачать Excel</button>
+    <button class="action-btn clear-btn" id="clear-btn" onclick="clearAll()">🗑️ Очистить всё</button>
 
     <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
     <script>
-        // ВАША НОВАЯ ССЫЛКА НА GOOGLE SCRIPT
         const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzDlIa--ef_TrhkyyBJLxmGKv9KWCRhtV2y7rt9UY2SKDN7JGJpAelijBDAoqqKheOrew/exec';
 
         const defaultData = [
@@ -83,19 +85,26 @@
 
         function loadData() {
             const saved = localStorage.getItem('shop188_data');
-            if (saved) {
-                return JSON.parse(saved).map(item => ({...item, synced: item.synced || false}));
-            }
+            if (saved) return JSON.parse(saved).map(item => ({...item, synced: item.synced || false}));
             return defaultData;
         }
 
         function saveData(data) {
             localStorage.setItem('shop188_data', JSON.stringify(data));
-            checkSyncStatus();
+            updateCounter();
         }
 
-        function calculateSum(values) {
-            return values.reduce((sum, val) => sum + Number(val), 0);
+        function calculateSum(values) { return values.reduce((sum, val) => sum + Number(val), 0); }
+
+        function updateCounter() {
+            const unsynced = getUnsyncedData().length;
+            const counter = document.getElementById('counter');
+            if (unsynced > 0) {
+                counter.textContent = `⏳ Ожидает отправки: ${unsynced} записей`;
+                counter.style.display = 'block';
+            } else {
+                counter.style.display = 'none';
+            }
         }
 
         function render() {
@@ -133,6 +142,7 @@
                 `;
                 container.appendChild(card);
             });
+            updateCounter();
         }
 
         function addValue(index) {
@@ -148,10 +158,7 @@
             } else { alert('Введите число'); }
         }
 
-        function toggleEdit(index) {
-            document.getElementById(`edit-${index}`).classList.toggle('show');
-        }
-
+        function toggleEdit(index) { document.getElementById(`edit-${index}`).classList.toggle('show'); }
         function changeValue(index, valueIndex, newValue) {
             const data = loadData();
             data[index].values[valueIndex] = Number(newValue);
@@ -159,7 +166,6 @@
             saveData(data);
             render();
         }
-
         function removeValue(index, valueIndex) {
             const data = loadData();
             data[index].values.splice(valueIndex, 1);
@@ -168,10 +174,7 @@
             render();
         }
 
-        function getUnsyncedData() {
-            return loadData().filter(item => !item.synced && item.values.length > 0);
-        }
-
+        function getUnsyncedData() { return loadData().filter(item => !item.synced && item.values.length > 0); }
         function markAsSynced() {
             const data = loadData();
             data.forEach(item => { if (item.values.length > 0) item.synced = true; });
@@ -181,151 +184,111 @@
 
         async function sendDataToGoogle(dataToSend) {
             try {
-                const rows = dataToSend.map(item => ({
-                    id: item.id, name: item.name, time: item.time,
-                    price: item.values.join('+'), quantity: calculateSum(item.values)
-                }));
+                const rows = dataToSend.map(item => ({ id: item.id, name: item.name, time: item.time, price: item.values.join('+'), quantity: calculateSum(item.values) }));
+                await fetch(GOOGLE_SCRIPT_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ data: rows }) });
+                return true;
+            } catch (error) { return false; }
+        }
+
+        async function clearGoogleSheet() {
+            try {
                 await fetch(GOOGLE_SCRIPT_URL, {
                     method: 'POST', mode: 'no-cors',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ data: rows })
+                    body: JSON.stringify({ action: 'clear' })
                 });
                 return true;
-            } catch (error) {
-                console.error("Ошибка:", error);
-                return false;
-            }
+            } catch (error) { return false; }
         }
 
+        // КНОПКА 1: Только синхронизация (без скачивания и очистки)
         async function runSync() {
             const unsynced = getUnsyncedData();
-            if (unsynced.length === 0) return alert('✅ Нет новых данных. Всё уже сохранено.');
-            if (!navigator.onLine) return alert('🔴 Нет интернета!');
-            if (!confirm(`📤 Отправить ${unsynced.length} новых записей в Google?`)) return;
+            if (unsynced.length === 0) return alert('✅ Нет новых данных. Всё уже отправлено в Google Таблицу.');
+            if (!navigator.onLine) return alert('🔴 Нет интернета! Подключитесь к сети.');
+            if (!confirm(`📤 Отправить ${unsynced.length} новых записей в Google Таблицу?\n\nДанные останутся в приложении.`)) return;
             
             const success = await sendDataToGoogle(unsynced);
-            if (success) {
-                markAsSynced();
-                alert('✅ Данные успешно отправлены!');
-            } else {
-                alert('❌ Ошибка отправки. Проверьте интернет.');
+            if (success) { 
+                markAsSynced(); 
+                alert('✅ Данные успешно отправлены в Google Таблицу!\n\nПриложение НЕ очищено — можно продолжать работу.'); 
+            } else { 
+                alert('❌ Ошибка отправки. Проверьте интернет.'); 
             }
         }
 
-        async function exportAndReset() {
+        // КНОПКА 2: Только скачать Excel (без очистки и отправки)
+        function downloadExcel() {
             const data = loadData();
-            const unsynced = getUnsyncedData();
-            if (!confirm('⚠️ Сохранить в Google, скачать Excel (А4 АЛЬБОМНАЯ) и сбросить приложение?')) return;
-
-            let googleSynced = false;
-            if (navigator.onLine && unsynced.length > 0) {
-                googleSynced = await sendDataToGoogle(unsynced);
-                if (googleSynced) markAsSynced();
-            } else if (unsynced.length === 0) {
-                googleSynced = true;
-            }
-
-            // --- ГЕНЕРАЦИЯ EXCEL ДЛЯ ПЕЧАТИ НА А4 (АЛЬБОМНАЯ ОРИЕНТАЦИЯ) ---
-            const wb = XLSX.utils.book_new();
-            const wsData = [
-                ['ID', 'Наименование работ с диапазоном объемов (кг)', 'Норма времени', 'Расценка', 'Количество']
-            ];
             
-            // Выгружаем ВСЮ таблицу, даже если значения пустые
+            const wb = XLSX.utils.book_new();
+            const wsData = [['ID', 'Наименование работ с диапазоном объемов (кг)', 'Норма времени', 'Расценка', 'Количество']];
+            
             data.forEach(item => {
                 const priceStr = item.values.length > 0 ? item.values.join('+') : "";
-                const sum = calculateSum(item.values);
-                wsData.push([item.id, item.name, item.time, priceStr, sum]);
+                wsData.push([item.id, item.name, item.time, priceStr, calculateSum(item.values)]);
             });
             
             const ws = XLSX.utils.aoa_to_sheet(wsData);
-
-            // 1. Настройка ширины столбцов для АЛЬБОМНОЙ ориентации
-            ws['!cols'] = [
-                { wch: 5 },  // ID: минимальная
-                { wch: 60 }, // Наименование: очень широкая
-                { wch: 14 }, // Норма времени
-                { wch: 55 }, // Расценка: широкая для переноса
-                { wch: 14 }  // Количество
-            ];
-
-            // 2. Перенос текста и форматирование
+            ws['!cols'] = [{ wch: 5 }, { wch: 60 }, { wch: 14 }, { wch: 55 }, { wch: 14 }];
+            
             const range = XLSX.utils.decode_range(ws['!ref']);
             for (let R = 1; R <= range.e.r; ++R) {
                 for (let C = 0; C <= range.e.c; ++C) {
                     const cell = ws[XLSX.utils.encode_cell({r: R, c: C})];
                     if (cell) {
-                        const wrapText = (C === 1 || C === 3); // Перенос для Наименования и Расценки
                         cell.s = {
                             font: { name: 'Times New Roman', sz: 9 },
-                            alignment: {
-                                wrapText: wrapText,
-                                vertical: 'center',
-                                horizontal: (C === 0 || C === 2 || C === 4) ? 'center' : 'left'
-                            }
+                            alignment: { wrapText: (C === 1 || C === 3), vertical: 'center', horizontal: (C === 0 || C === 2 || C === 4) ? 'center' : 'left' }
                         };
                     }
                 }
             }
-
-            // Форматирование заголовков
             for (let C = 0; C <= range.e.c; ++C) {
                 const cell = ws[XLSX.utils.encode_cell({r: 0, c: C})];
-                if (cell) {
-                    cell.s = {
-                        font: { name: 'Times New Roman', sz: 10, bold: true },
-                        alignment: { wrapText: true, vertical: 'center', horizontal: 'center' }
-                    };
-                }
+                if (cell) cell.s = { font: { name: 'Times New Roman', sz: 10, bold: true }, alignment: { wrapText: true, vertical: 'center', horizontal: 'center' } };
             }
 
-            // 3. Настройки страницы для АЛЬБОМНОЙ печати на А4
             ws['!margins'] = { left: 0.3, right: 0.3, top: 0.3, bottom: 0.3, header: 0.2, footer: 0.2 };
-            ws['!pagesetup'] = { 
-                paperSize: 9,          // 9 = A4
-                orientation: 2,        // 2 = АЛЬБОМНАЯ (landscape)
-                fitToPage: true,       // Вписать в страницу
-                fitToWidth: 1,         // Вписать в 1 страницу по ширине
-                fitToHeight: 1         // Вписать в 1 страницу по высоте
-            };
+            ws['!pagesetup'] = { paperSize: 9, orientation: 2, fitToPage: true, fitToWidth: 1, fitToHeight: 1 };
 
             XLSX.utils.book_append_sheet(wb, ws, 'Нормы цеха 188');
             XLSX.writeFile(wb, `Нормы_188_${new Date().toISOString().split('T')[0]}.xlsx`);
-
-            setTimeout(() => {
-                if (googleSynced) {
-                    if (confirm('✅ Сохранено в Google и таблица А4 (альбомная) скачана!\n\nОчистить приложение для новой смены?')) {
-                        localStorage.removeItem('shop188_data');
-                        location.reload();
-                    }
-                } else {
-                    alert('⚠️ Google Таблица не обновлена.\n\nНо файл Excel скачан в "Загрузки"!\nПриложение НЕ очищено.');
-                }
-            }, 1000);
+            
+            alert('✅ Excel-файл скачан в папку "Загрузки"!\n\nДанные в приложении НЕ изменены.');
         }
 
-        function checkSyncStatus() {
-            const hasData = loadData().some(item => item.values.length > 0);
-            document.getElementById('sync-btn').classList.toggle('show', hasData);
-            document.getElementById('export-btn').classList.toggle('show', hasData);
+        // КНОПКА 3: Полная очистка (приложение + Google Таблица)
+        async function clearAll() {
+            const data = loadData();
+            const hasData = data.some(item => item.values.length > 0);
+            
+            if (!hasData) return alert('✅ Приложение уже пустое. Нечего очищать.');
+            
+            if (!confirm('⚠️ ВНИМАНИЕ!\n\nЭто действие:\n1. Очистит Google Таблицу (столбцы Расценка и Количество)\n2. Очистит все данные в приложении\n\nВы уверены?')) return;
+            
+            if (!navigator.onLine) return alert('🔴 Нет интернета! Для очистки Google Таблицы нужно подключение.');
+            
+            const cleared = await clearGoogleSheet();
+            if (cleared) {
+                localStorage.removeItem('shop188_data');
+                alert('🎉 Всё очищено! Приложение и Google Таблица готовы к новой смене.');
+                location.reload();
+            } else {
+                alert(' Не удалось очистить Google Таблицу. Проверьте интернет.');
+            }
         }
 
         function updateStatus() {
             const bar = document.getElementById('status-bar');
-            if (navigator.onLine) {
-                bar.textContent = '🟢 Онлайн';
-                bar.className = 'status-bar';
-            } else {
-                bar.textContent = '🔴 Оффлайн - данные сохраняются локально';
-                bar.className = 'status-bar offline';
-            }
+            if (navigator.onLine) { bar.textContent = '🟢 Онлайн'; bar.className = 'status-bar'; } 
+            else { bar.textContent = '🔴 Оффлайн - данные сохраняются локально'; bar.className = 'status-bar offline'; }
         }
 
         window.addEventListener('online', updateStatus);
         window.addEventListener('offline', updateStatus);
         render();
         updateStatus();
-        checkSyncStatus();
     </script>
 </body>
 </html>
