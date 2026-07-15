@@ -39,13 +39,13 @@
 </head>
 <body>
     <div class="container">
-        <h1> Нормы цеха 188</h1>
+        <h1>📊 Нормы цеха 188</h1>
         <div class="status-bar" id="status-bar">🟢 Онлайн</div>
         <div id="cards"></div>
     </div>
 
     <button class="action-btn sync-btn" id="sync-btn" onclick="runSync()">🔄 Синхронизировать с Google</button>
-    <button class="action-btn export-btn" id="export-btn" onclick="exportAndReset()"> Сохранить в Google, скачать Excel (А4) и сбросить</button>
+    <button class="action-btn export-btn" id="export-btn" onclick="exportAndReset()">💾 Сохранить в Google, скачать Excel (А4 альбомная) и сбросить</button>
 
     <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
     <script>
@@ -207,14 +207,14 @@
                 markAsSynced();
                 alert('✅ Данные успешно отправлены!');
             } else {
-                alert('❌ Ошибка отправки. Проверьте интернет.');
+                alert(' Ошибка отправки. Проверьте интернет.');
             }
         }
 
         async function exportAndReset() {
             const data = loadData();
             const unsynced = getUnsyncedData();
-            if (!confirm('️ Сохранить в Google, скачать Excel (формат А4) и сбросить приложение?')) return;
+            if (!confirm('⚠️ Сохранить в Google, скачать Excel (А4 АЛЬБОМНАЯ) и сбросить приложение?')) return;
 
             let googleSynced = false;
             if (navigator.onLine && unsynced.length > 0) {
@@ -224,7 +224,7 @@
                 googleSynced = true;
             }
 
-            // --- ГЕНЕРАЦИЯ EXCEL ДЛЯ ПЕЧАТИ НА А4 ---
+            // --- ГЕНЕРАЦИЯ EXCEL ДЛЯ ПЕЧАТИ НА А4 (АЛЬБОМНАЯ ОРИЕНТАЦИЯ) ---
             const wb = XLSX.utils.book_new();
             const wsData = [
                 ['ID', 'Наименование работ с диапазоном объемов (кг)', 'Норма времени', 'Расценка', 'Количество']
@@ -238,25 +238,24 @@
             
             const ws = XLSX.utils.aoa_to_sheet(wsData);
 
-            // 1. Настройка ширины столбцов
+            // 1. Настройка ширины столбцов для АЛЬБОМНОЙ ориентации (больше места!)
             ws['!cols'] = [
-                { wch: 4 },  // ID: минимальная
-                { wch: 50 }, // Наименование: широкая
-                { wch: 12 }, // Норма времени: минимальная для цифр
-                { wch: 45 }, // Расценка: широкая для длинных строк
-                { wch: 12 }  // Количество
+                { wch: 5 },  // ID: минимальная
+                { wch: 60 }, // Наименование: очень широкая
+                { wch: 14 }, // Норма времени
+                { wch: 55 }, // Расценка: широкая для переноса
+                { wch: 14 }  // Количество
             ];
 
-            // 2. Перенос текста и форматирование для ВСЕХ ячеек данных
+            // 2. Перенос текста и форматирование
             const range = XLSX.utils.decode_range(ws['!ref']);
             for (let R = 1; R <= range.e.r; ++R) {
                 for (let C = 0; C <= range.e.c; ++C) {
                     const cell = ws[XLSX.utils.encode_cell({r: R, c: C})];
                     if (cell) {
-                        // Перенос текста для столбцов B (Наименование) и D (Расценка)
-                        const wrapText = (C === 1 || C === 3);
+                        const wrapText = (C === 1 || C === 3); // Перенос для Наименования и Расценки
                         cell.s = {
-                            font: { name: 'Times New Roman', sz: 10 }, // Уменьшенный шрифт 10pt
+                            font: { name: 'Times New Roman', sz: 9 }, // Ещё меньше шрифт для альбомной
                             alignment: {
                                 wrapText: wrapText,
                                 vertical: 'center',
@@ -267,25 +266,25 @@
                 }
             }
 
-            // Форматирование заголовков (жирный шрифт, центрирование)
+            // Форматирование заголовков
             for (let C = 0; C <= range.e.c; ++C) {
                 const cell = ws[XLSX.utils.encode_cell({r: 0, c: C})];
                 if (cell) {
                     cell.s = {
-                        font: { name: 'Times New Roman', sz: 11, bold: true },
+                        font: { name: 'Times New Roman', sz: 10, bold: true },
                         alignment: { wrapText: true, vertical: 'center', horizontal: 'center' }
                     };
                 }
             }
 
-            // 3. Настройки страницы для печати на А4
-            ws['!margins'] = { left: 0.4, right: 0.4, top: 0.4, bottom: 0.4, header: 0.2, footer: 0.2 };
+            // 3. Настройки страницы для АЛЬБОМНОЙ печати на А4
+            ws['!margins'] = { left: 0.3, right: 0.3, top: 0.3, bottom: 0.3, header: 0.2, footer: 0.2 };
             ws['!pagesetup'] = { 
                 paperSize: 9,          // 9 = A4
-                orientation: 1,        // 1 = Портретная ориентация
+                orientation: 2,        // 2 = АЛЬБОМНАЯ (landscape)
                 fitToPage: true,       // Вписать в страницу
                 fitToWidth: 1,         // Вписать в 1 страницу по ширине
-                fitToHeight: 1         // Вписать в 1 страницу по высоте (автоматически уменьшит шрифт)
+                fitToHeight: 1         // Вписать в 1 страницу по высоте
             };
 
             XLSX.utils.book_append_sheet(wb, ws, 'Нормы цеха 188');
@@ -293,7 +292,7 @@
 
             setTimeout(() => {
                 if (googleSynced) {
-                    if (confirm('✅ Сохранено в Google и таблица А4 скачана!\n\nОчистить приложение для новой смены?')) {
+                    if (confirm('✅ Сохранено в Google и таблица А4 (альбомная) скачана!\n\nОчистить приложение для новой смены?')) {
                         localStorage.removeItem('shop188_data');
                         location.reload();
                     }
@@ -312,10 +311,10 @@
         function updateStatus() {
             const bar = document.getElementById('status-bar');
             if (navigator.onLine) {
-                bar.textContent = ' Онлайн';
+                bar.textContent = '🟢 Онлайн';
                 bar.className = 'status-bar';
             } else {
-                bar.textContent = ' Оффлайн - данные сохраняются локально';
+                bar.textContent = '🔴 Оффлайн - данные сохраняются локально';
                 bar.className = 'status-bar offline';
             }
         }
