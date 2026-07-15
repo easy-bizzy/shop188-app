@@ -4,15 +4,26 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#1976D2">
     <title>Нормы цеха 188</title>
+    
+    <!-- Иконки для разных устройств -->
+    <link rel="icon" type="image/png" sizes="512x512" href="icon.png">
+    <link rel="apple-touch-icon" href="icon.png">
+    <link rel="apple-touch-icon" sizes="192x192" href="icon.png">
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+    
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; padding: 15px; padding-bottom: 220px; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; padding: 15px; }
         .container { max-width: 600px; margin: 0 auto; }
         h1 { text-align: center; color: #1976D2; margin-bottom: 15px; font-size: 22px; }
-        .status-bar { background: #4CAF50; color: white; padding: 10px; border-radius: 8px; text-align: center; margin-bottom: 15px; font-size: 14px; }
+        .status-bar { background: #4CAF50; color: white; padding: 10px; border-radius: 8px; text-align: center; margin-bottom: 10px; font-size: 14px; }
         .status-bar.offline { background: #f44336; }
-        .counter { background: #FF9800; color: white; padding: 8px; border-radius: 8px; text-align: center; margin-bottom: 15px; font-size: 14px; font-weight: bold; }
+        .counter { background: #FF9800; color: white; padding: 10px; border-radius: 8px; text-align: center; margin-bottom: 15px; font-size: 14px; font-weight: bold; }
         .card { background: white; border-radius: 10px; padding: 15px; margin-bottom: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         .card-header { font-weight: bold; font-size: 15px; margin-bottom: 8px; color: #333; line-height: 1.3; }
         .card-number { display: inline-block; background: #1976D2; color: white; padding: 3px 10px; border-radius: 12px; font-size: 14px; font-weight: bold; margin-right: 8px; }
@@ -32,23 +43,56 @@
         .btn-remove { background: #f44336; color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; }
         .btn-save { background: #2196F3; color: white; width: 100%; margin-top: 10px; padding: 10px; }
         .btn-close { background: #9e9e9e; color: white; width: 100%; margin-top: 5px; padding: 10px; }
-        .action-btn { position: fixed; left: 50%; transform: translateX(-50%); color: white; padding: 14px 20px; border-radius: 25px; font-size: 14px; font-weight: bold; box-shadow: 0 4px 10px rgba(0,0,0,0.3); cursor: pointer; z-index: 1000; border: none; width: 90%; max-width: 500px; text-align: center; }
-        .sync-btn { bottom: 140px; background: #2196F3; }
-        .export-btn { bottom: 80px; background: #FF9800; }
-        .clear-btn { bottom: 20px; background: #f44336; }
+        
+        .actions-block {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .actions-block h3 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 12px;
+            font-size: 16px;
+        }
+        .action-btn {
+            width: 100%;
+            padding: 14px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-bottom: 10px;
+            color: white;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+        }
+        .action-btn:last-child { margin-bottom: 0; }
+        .sync-btn { background: #2196F3; }
+        .sync-btn:hover { background: #1976D2; }
+        .export-btn { background: #FF9800; }
+        .export-btn:hover { background: #F57C00; }
+        .clear-btn { background: #f44336; }
+        .clear-btn:hover { background: #d32f2f; }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>📊 Нормы цеха 188</h1>
-        <div class="status-bar" id="status-bar"> Онлайн</div>
-        <div class="counter" id="counter" style="display: none;"> Ожидает отправки: 0 записей</div>
+        <h1> Нормы цеха 188</h1>
+        <div class="status-bar" id="status-bar">🟢 Онлайн</div>
+        <div class="counter" id="counter" style="display: none;">⏳ Ожидает отправки: 0 записей</div>
         <div id="cards"></div>
-    </div>
 
-    <button class="action-btn sync-btn" id="sync-btn" onclick="runSync()">🔄 Синхронизировать с Google</button>
-    <button class="action-btn export-btn" id="export-btn" onclick="downloadExcel()">📥 Скачать Excel</button>
-    <button class="action-btn clear-btn" id="clear-btn" onclick="clearAll()">🗑️ Очистить всё</button>
+        <div class="actions-block">
+            <h3>⚙️ Действия</h3>
+            <button class="action-btn sync-btn" onclick="runSync()">🔄 Синхронизировать с Google</button>
+            <button class="action-btn export-btn" onclick="downloadExcel()"> Скачать Excel</button>
+            <button class="action-btn clear-btn" onclick="clearAll()">️ Очистить всё</button>
+        </div>
+    </div>
 
     <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
     <script>
@@ -100,7 +144,7 @@
             const unsynced = getUnsyncedData().length;
             const counter = document.getElementById('counter');
             if (unsynced > 0) {
-                counter.textContent = `⏳ Ожидает отправки: ${unsynced} записей`;
+                counter.textContent = ` Ожидает отправки: ${unsynced} записей`;
                 counter.style.display = 'block';
             } else {
                 counter.style.display = 'none';
@@ -133,7 +177,7 @@
                             ${item.values.map((val, i) => `
                                 <div class="edit-item">
                                     <input type="number" value="${val}" onchange="changeValue(${index}, ${i}, this.value)" step="0.01">
-                                    <button class="btn-remove" onclick="removeValue(${index}, ${i})">🗑️</button>
+                                    <button class="btn-remove" onclick="removeValue(${index}, ${i})">️</button>
                                 </div>
                             `).join('')}
                             <button class="btn btn-save" onclick="toggleEdit(${index})">Закрыть</button>
@@ -201,7 +245,6 @@
             } catch (error) { return false; }
         }
 
-        // КНОПКА 1: Только синхронизация (без скачивания и очистки)
         async function runSync() {
             const unsynced = getUnsyncedData();
             if (unsynced.length === 0) return alert('✅ Нет новых данных. Всё уже отправлено в Google Таблицу.');
@@ -217,7 +260,6 @@
             }
         }
 
-        // КНОПКА 2: Только скачать Excel (без очистки и отправки)
         function downloadExcel() {
             const data = loadData();
             
@@ -258,7 +300,6 @@
             alert('✅ Excel-файл скачан в папку "Загрузки"!\n\nДанные в приложении НЕ изменены.');
         }
 
-        // КНОПКА 3: Полная очистка (приложение + Google Таблица)
         async function clearAll() {
             const data = loadData();
             const hasData = data.some(item => item.values.length > 0);
@@ -275,7 +316,7 @@
                 alert('🎉 Всё очищено! Приложение и Google Таблица готовы к новой смене.');
                 location.reload();
             } else {
-                alert(' Не удалось очистить Google Таблицу. Проверьте интернет.');
+                alert('❌ Не удалось очистить Google Таблицу. Проверьте интернет.');
             }
         }
 
