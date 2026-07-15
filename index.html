@@ -49,7 +49,8 @@
 
     <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
     <script>
-        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxfe9mA345oT_em_xK2OrjiY7KxwYIjG5COU5LhqTsAybm6bCUg_GxXDDU_kn6x5Hfv/exec';
+        // ВАША НОВАЯ ССЫЛКА НА GOOGLE SCRIPT
+        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzDlIa--ef_TrhkyyBJLxmGKv9KWCRhtV2y7rt9UY2SKDN7JGJpAelijBDAoqqKheOrew/exec';
 
         const defaultData = [
             {id: 1, name: "10-300 Перемещение, укладка тары эл штабелером", time: 0.28, values: [], synced: false},
@@ -207,7 +208,7 @@
                 markAsSynced();
                 alert('✅ Данные успешно отправлены!');
             } else {
-                alert(' Ошибка отправки. Проверьте интернет.');
+                alert('❌ Ошибка отправки. Проверьте интернет.');
             }
         }
 
@@ -230,6 +231,7 @@
                 ['ID', 'Наименование работ с диапазоном объемов (кг)', 'Норма времени', 'Расценка', 'Количество']
             ];
             
+            // Выгружаем ВСЮ таблицу, даже если значения пустые
             data.forEach(item => {
                 const priceStr = item.values.length > 0 ? item.values.join('+') : "";
                 const sum = calculateSum(item.values);
@@ -238,7 +240,7 @@
             
             const ws = XLSX.utils.aoa_to_sheet(wsData);
 
-            // 1. Настройка ширины столбцов для АЛЬБОМНОЙ ориентации (больше места!)
+            // 1. Настройка ширины столбцов для АЛЬБОМНОЙ ориентации
             ws['!cols'] = [
                 { wch: 5 },  // ID: минимальная
                 { wch: 60 }, // Наименование: очень широкая
@@ -255,7 +257,7 @@
                     if (cell) {
                         const wrapText = (C === 1 || C === 3); // Перенос для Наименования и Расценки
                         cell.s = {
-                            font: { name: 'Times New Roman', sz: 9 }, // Ещё меньше шрифт для альбомной
+                            font: { name: 'Times New Roman', sz: 9 },
                             alignment: {
                                 wrapText: wrapText,
                                 vertical: 'center',
