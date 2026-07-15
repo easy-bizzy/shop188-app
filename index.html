@@ -7,34 +7,17 @@
     <title>Нормы цеха 188</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #f5f5f5;
-            padding: 15px;
-            padding-bottom: 160px;
-        }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; padding: 15px; padding-bottom: 160px; }
         .container { max-width: 600px; margin: 0 auto; }
         h1 { text-align: center; color: #1976D2; margin-bottom: 15px; font-size: 22px; }
-        .status-bar {
-            background: #4CAF50; color: white; padding: 10px; border-radius: 8px;
-            text-align: center; margin-bottom: 15px; font-size: 14px;
-        }
+        .status-bar { background: #4CAF50; color: white; padding: 10px; border-radius: 8px; text-align: center; margin-bottom: 15px; font-size: 14px; }
         .status-bar.offline { background: #f44336; }
-        .card {
-            background: white; border-radius: 10px; padding: 15px;
-            margin-bottom: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
+        .card { background: white; border-radius: 10px; padding: 15px; margin-bottom: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         .card-header { font-weight: bold; font-size: 15px; margin-bottom: 8px; color: #333; line-height: 1.3; }
-        .card-number {
-            display: inline-block; background: #1976D2; color: white;
-            padding: 3px 10px; border-radius: 12px; font-size: 14px; font-weight: bold; margin-right: 8px;
-        }
+        .card-number { display: inline-block; background: #1976D2; color: white; padding: 3px 10px; border-radius: 12px; font-size: 14px; font-weight: bold; margin-right: 8px; }
         .card-meta { font-size: 13px; color: #666; margin-bottom: 10px; }
         .input-group { display: flex; gap: 8px; margin-bottom: 10px; }
-        .input-group input {
-            flex: 1; padding: 12px; border: 2px solid #ddd; border-radius: 8px;
-            font-size: 18px; text-align: center;
-        }
+        .input-group input { flex: 1; padding: 12px; border: 2px solid #ddd; border-radius: 8px; font-size: 18px; text-align: center; }
         .input-group input:focus { outline: none; border-color: #1976D2; }
         .btn { padding: 12px 20px; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; font-weight: bold; }
         .btn-add { background: #4CAF50; color: white; }
@@ -48,13 +31,7 @@
         .btn-remove { background: #f44336; color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; }
         .btn-save { background: #2196F3; color: white; width: 100%; margin-top: 10px; padding: 10px; }
         .btn-close { background: #9e9e9e; color: white; width: 100%; margin-top: 5px; padding: 10px; }
-        
-        .action-btn {
-            position: fixed; left: 50%; transform: translateX(-50%);
-            color: white; padding: 15px 20px; border-radius: 25px;
-            font-size: 15px; font-weight: bold; box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-            cursor: pointer; display: none; z-index: 1000; border: none; width: 90%; max-width: 500px; text-align: center;
-        }
+        .action-btn { position: fixed; left: 50%; transform: translateX(-50%); color: white; padding: 15px 20px; border-radius: 25px; font-size: 15px; font-weight: bold; box-shadow: 0 4px 10px rgba(0,0,0,0.3); cursor: pointer; display: none; z-index: 1000; border: none; width: 90%; max-width: 500px; text-align: center; }
         .sync-btn { bottom: 80px; background: #FF9800; }
         .export-btn { bottom: 20px; background: #9C27B0; }
         .action-btn.show { display: block; }
@@ -67,17 +44,14 @@
         <div id="cards"></div>
     </div>
 
-    <button class="action-btn sync-btn" id="sync-btn" onclick="syncData()">
-        🔄 Синхронизировать с Google
-    </button>
-
-    <button class="action-btn export-btn" id="export-btn" onclick="exportAndReset()">
-        💾 Сохранить в Google, скачать Excel и сбросить
-    </button>
+    <button class="action-btn sync-btn" id="sync-btn" onclick="runSync()">🔄 Синхронизировать с Google</button>
+    <button class="action-btn export-btn" id="export-btn" onclick="exportAndReset()">💾 Сохранить в Google, скачать Excel и сбросить</button>
 
     <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
-    <script src="sync.js"></script>
     <script>
+        // ВАША ССЫЛКА НА GOOGLE SCRIPT
+        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxfe9mA345oT_em_xK2OrjiY7KxwYIjG5COU5LhqTsAybm6bCUg_GxXDDU_kn6x5Hfv/exec';
+
         const defaultData = [
             {id: 1, name: "10-300 Перемещение, укладка тары эл штабелером", time: 0.28, values: [], synced: false},
             {id: 2, name: "50-300 Перемещение по скл кран-балкой", time: 0.34, values: [], synced: false},
@@ -110,9 +84,7 @@
         function loadData() {
             const saved = localStorage.getItem('shop188_data');
             if (saved) {
-                const parsed = JSON.parse(saved);
-                // Добавляем synced:false для старых данных без этого поля
-                return parsed.map(item => ({...item, synced: item.synced || false}));
+                return JSON.parse(saved).map(item => ({...item, synced: item.synced || false}));
             }
             return defaultData;
         }
@@ -130,16 +102,14 @@
             const data = loadData();
             const container = document.getElementById('cards');
             container.innerHTML = '';
-
             data.forEach((item, index) => {
                 const sum = calculateSum(item.values);
                 const card = document.createElement('div');
                 card.className = 'card';
                 card.innerHTML = `
                     <div class="card-header">
-                        <span class="card-number">№${item.id}</span>
-                        ${item.name}
-                        ${item.synced ? '<span style="color: #4CAF50; font-size: 12px;">✅</span>' : ''}
+                        <span class="card-number">№${item.id}</span> ${item.name}
+                        ${item.synced ? '<span style="color: #4CAF50; font-size: 12px; margin-left: 5px;">✅</span>' : ''}
                     </div>
                     <div class="card-meta">Норма времени: ${item.time}</div>
                     <div class="input-group">
@@ -157,8 +127,7 @@
                                     <button class="btn-remove" onclick="removeValue(${index}, ${i})">🗑️</button>
                                 </div>
                             `).join('')}
-                            <button class="btn btn-save" onclick="saveEdit(${index})">💾 Сохранить</button>
-                            <button class="btn btn-close" onclick="toggleEdit(${index})">Закрыть</button>
+                            <button class="btn btn-save" onclick="toggleEdit(${index})">Закрыть</button>
                         </div>
                     ` : ''}
                 `;
@@ -172,7 +141,7 @@
             const value = Number(input.value);
             if (value !== 0) {
                 data[index].values.push(value);
-                data[index].synced = false; // Сбрасываем флаг при изменении
+                data[index].synced = false;
                 saveData(data);
                 input.value = '';
                 render();
@@ -186,7 +155,7 @@
         function changeValue(index, valueIndex, newValue) {
             const data = loadData();
             data[index].values[valueIndex] = Number(newValue);
-            data[index].synced = false; // Сбрасываем флаг при изменении
+            data[index].synced = false;
             saveData(data);
             render();
         }
@@ -199,162 +168,104 @@
             render();
         }
 
-        function saveEdit(index) { toggleEdit(index); }
-
-        // Получаем только НЕ отправленные данные
         function getUnsyncedData() {
-            const data = loadData();
-            return data.filter(item => !item.synced && item.values.length > 0);
+            return loadData().filter(item => !item.synced && item.values.length > 0);
         }
 
-        // Отметить данные как отправленные
         function markAsSynced() {
             const data = loadData();
-            data.forEach(item => {
-                if (item.values.length > 0) {
-                    item.synced = true;
-                }
-            });
+            data.forEach(item => { if (item.values.length > 0) item.synced = true; });
             saveData(data);
             render();
         }
 
-        // Синхронизация с Google (только новые данные)
-        async function syncData() {
-            const unsyncedData = getUnsyncedData();
-            
-            if (unsyncedData.length === 0) {
-                alert('✅ Нет новых данных для отправки. Все данные уже сохранены в Google Таблице.');
-                return;
-            }
-
-            if (!navigator.onLine) {
-                alert('🔴 Нет интернета! Подключитесь к сети для синхронизации.');
-                return;
-            }
-
-            if (!confirm(`📤 Отправить ${unsyncedData.length} новых записей в Google Таблицу?`)) {
-                return;
-            }
-
+        async function sendDataToGoogle(dataToSend) {
             try {
-                const rows = unsyncedData.map(item => ({
-                    id: item.id,
-                    name: item.name,
-                    time: item.time,
-                    price: item.values.join('+'),
-                    quantity: calculateSum(item.values)
+                const rows = dataToSend.map(item => ({
+                    id: item.id, name: item.name, time: item.time,
+                    price: item.values.join('+'), quantity: calculateSum(item.values)
                 }));
-
                 await fetch(GOOGLE_SCRIPT_URL, {
-                    method: 'POST',
-                    mode: 'no-cors',
+                    method: 'POST', mode: 'no-cors',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ data: rows })
                 });
-
-                markAsSynced();
-                alert('✅ Данные успешно отправлены в Google Таблицу!');
+                return true;
             } catch (error) {
-                alert('❌ Ошибка синхронизации: ' + error.message);
+                console.error("Ошибка:", error);
+                return false;
             }
         }
 
-        // Экспорт + Синхронизация + Сброс
+        async function runSync() {
+            const unsynced = getUnsyncedData();
+            if (unsynced.length === 0) return alert('✅ Нет новых данных. Всё уже сохранено.');
+            if (!navigator.onLine) return alert('🔴 Нет интернета!');
+            if (!confirm(`📤 Отправить ${unsynced.length} новых записей в Google?`)) return;
+            
+            const success = await sendDataToGoogle(unsynced);
+            if (success) {
+                markAsSynced();
+                alert('✅ Данные успешно отправлены!');
+            } else {
+                alert('❌ Ошибка отправки. Проверьте интернет.');
+            }
+        }
+
         async function exportAndReset() {
             const data = loadData();
-            const unsyncedData = getUnsyncedData();
-            const hasInternet = navigator.onLine;
-            const hasGoogleScript = typeof GOOGLE_SCRIPT_URL !== 'undefined' && GOOGLE_SCRIPT_URL.includes('script.google.com');
-
-            if (!confirm('⚠️ Сохранить данные в Google Таблицу, скачать Excel-файл и сбросить приложение?')) {
-                return;
-            }
+            const unsynced = getUnsyncedData();
+            if (!confirm('⚠️ Сохранить в Google, скачать Excel и сбросить приложение?')) return;
 
             let googleSynced = false;
-
-            // 1. Отправка только НОВЫХ данных в Google
-            if (hasInternet && hasGoogleScript && unsyncedData.length > 0) {
-                try {
-                    const rows = unsyncedData.map(item => ({
-                        id: item.id, name: item.name, time: item.time,
-                        price: item.values.join('+'), quantity: calculateSum(item.values)
-                    }));
-                    await fetch(GOOGLE_SCRIPT_URL, {
-                        method: 'POST', mode: 'no-cors',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ data: rows })
-                    });
-                    googleSynced = true;
-                    console.log('✅ Отправлено новых записей:', unsyncedData.length);
-                } catch (error) {
-                    console.error("❌ Ошибка синхронизации:", error);
-                }
-            } else if (hasInternet && hasGoogleScript && unsyncedData.length === 0) {
-                googleSynced = true; // Все данные уже отправлены
+            if (navigator.onLine && unsynced.length > 0) {
+                googleSynced = await sendDataToGoogle(unsynced);
+                if (googleSynced) markAsSynced();
+            } else if (unsynced.length === 0) {
+                googleSynced = true;
             }
 
-            // 2. Создание Excel со ВСЕМИ данными (включая старые)
             const wb = XLSX.utils.book_new();
             const wsData = [['ID', 'Наименование работ', 'Норма времени', 'Расценка', 'Количество']];
-            
             data.forEach(item => {
                 if (item.values.length > 0) {
                     wsData.push([item.id, item.name, item.time, item.values.join('+'), calculateSum(item.values)]);
                 }
             });
-            
-            const ws = XLSX.utils.aoa_to_sheet(wsData);
-            XLSX.utils.book_append_sheet(wb, ws, 'Нормы цеха 188');
-            const filename = `Нормы_188_${new Date().toISOString().split('T')[0]}.xlsx`;
-            XLSX.writeFile(wb, filename);
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(wsData), 'Нормы цеха 188');
+            XLSX.writeFile(wb, `Нормы_188_${new Date().toISOString().split('T')[0]}.xlsx`);
 
-            // 3. Сброс только если успешно отправили
             setTimeout(() => {
                 if (googleSynced) {
-                    if (confirm('✅ Данные сохранены в Google Таблицу и Excel-файл скачан!\n\nОчистить приложение для новой смены?')) {
+                    if (confirm('✅ Сохранено в Google и Excel скачан!\n\nОчистить приложение для новой смены?')) {
                         localStorage.removeItem('shop188_data');
-                        localStorage.removeItem('last_sync');
                         location.reload();
                     }
                 } else {
-                    alert('⚠️ ВНИМАНИЕ!\n\n' + 
-                          (hasInternet ? 'Не удалось подключиться к Google Таблице.' : 'Нет интернета - Google Таблица не обновлена.') + 
-                          '\n\nExcel-файл скачан в папку "Загрузки" - данные не потеряны!\n\n' +
-                          'Приложение НЕ очищено. Данные останутся, пока не будут отправлены в Google Таблицу.');
+                    alert('⚠️ Google Таблица не обновлена (нет интернета или ошибка).\n\nНо Excel-файл скачан в "Загрузки" - данные в безопасности!\nПриложение НЕ очищено.');
                 }
             }, 1000);
         }
 
         function checkSyncStatus() {
-            const data = loadData();
-            const hasEnteredData = data.some(item => item.values.length > 0);
-            const syncBtn = document.getElementById('sync-btn');
-            const exportBtn = document.getElementById('export-btn');
-            
-            if (hasEnteredData) {
-                syncBtn.classList.add('show');
-                exportBtn.classList.add('show');
-            } else {
-                syncBtn.classList.remove('show');
-                exportBtn.classList.remove('show');
-            }
+            const hasData = loadData().some(item => item.values.length > 0);
+            document.getElementById('sync-btn').classList.toggle('show', hasData);
+            document.getElementById('export-btn').classList.toggle('show', hasData);
         }
 
         function updateStatus() {
-            const statusBar = document.getElementById('status-bar');
+            const bar = document.getElementById('status-bar');
             if (navigator.onLine) {
-                statusBar.textContent = ' Онлайн';
-                statusBar.className = 'status-bar';
+                bar.textContent = '🟢 Онлайн';
+                bar.className = 'status-bar';
             } else {
-                statusBar.textContent = '🔴 Оффлайн - данные сохраняются локально';
-                statusBar.className = 'status-bar offline';
+                bar.textContent = '🔴 Оффлайн - данные сохраняются локально';
+                bar.className = 'status-bar offline';
             }
         }
 
         window.addEventListener('online', updateStatus);
         window.addEventListener('offline', updateStatus);
-
         render();
         updateStatus();
         checkSyncStatus();
