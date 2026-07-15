@@ -6,256 +6,126 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <title>Нормы цеха 188</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: #f5f5f5;
             padding: 15px;
-            padding-bottom: 100px;
+            padding-bottom: 160px;
         }
-        .container {
-            max-width: 600px;
-            margin: 0 auto;
-        }
-        h1 {
-            text-align: center;
-            color: #1976D2;
-            margin-bottom: 15px;
-            font-size: 22px;
-        }
+        .container { max-width: 600px; margin: 0 auto; }
+        h1 { text-align: center; color: #1976D2; margin-bottom: 15px; font-size: 22px; }
         .status-bar {
-            background: #4CAF50;
-            color: white;
-            padding: 10px;
-            border-radius: 8px;
-            text-align: center;
-            margin-bottom: 15px;
-            font-size: 14px;
+            background: #4CAF50; color: white; padding: 10px; border-radius: 8px;
+            text-align: center; margin-bottom: 15px; font-size: 14px;
         }
-        .status-bar.offline {
-            background: #f44336;
-        }
+        .status-bar.offline { background: #f44336; }
         .card {
-            background: white;
-            border-radius: 10px;
-            padding: 15px;
-            margin-bottom: 10px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            background: white; border-radius: 10px; padding: 15px;
+            margin-bottom: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
-        .card-header {
-            font-weight: bold;
-            font-size: 15px;
-            margin-bottom: 8px;
-            color: #333;
-            line-height: 1.3;
-        }
+        .card-header { font-weight: bold; font-size: 15px; margin-bottom: 8px; color: #333; line-height: 1.3; }
         .card-number {
-            display: inline-block;
-            background: #1976D2;
-            color: white;
-            padding: 3px 10px;
-            border-radius: 12px;
-            font-size: 14px;
-            font-weight: bold;
-            margin-right: 8px;
+            display: inline-block; background: #1976D2; color: white;
+            padding: 3px 10px; border-radius: 12px; font-size: 14px; font-weight: bold; margin-right: 8px;
         }
-        .card-meta {
-            font-size: 13px;
-            color: #666;
-            margin-bottom: 10px;
-        }
-        .input-group {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 10px;
-        }
+        .card-meta { font-size: 13px; color: #666; margin-bottom: 10px; }
+        .input-group { display: flex; gap: 8px; margin-bottom: 10px; }
         .input-group input {
-            flex: 1;
-            padding: 12px;
-            border: 2px solid #ddd;
-            border-radius: 8px;
-            font-size: 18px;
-            text-align: center;
+            flex: 1; padding: 12px; border: 2px solid #ddd; border-radius: 8px;
+            font-size: 18px; text-align: center;
         }
-        .input-group input:focus {
-            outline: none;
-            border-color: #1976D2;
+        .input-group input:focus { outline: none; border-color: #1976D2; }
+        .btn { padding: 12px 20px; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; font-weight: bold; }
+        .btn-add { background: #4CAF50; color: white; }
+        .btn-edit { background: #2196F3; color: white; margin-top: 8px; width: 100%; padding: 10px; }
+        .result { background: #FFF2CC; padding: 10px; border-radius: 8px; text-align: center; font-size: 16px; font-weight: bold; margin-bottom: 8px; }
+        .total { background: #C6EFCE; padding: 10px; border-radius: 8px; text-align: center; font-size: 18px; font-weight: bold; color: #006100; }
+        .edit-section { display: none; margin-top: 10px; padding: 10px; background: #f9f9f9; border-radius: 8px; }
+        .edit-section.show { display: block; }
+        .edit-item { display: flex; gap: 5px; margin-bottom: 5px; align-items: center; }
+        .edit-item input { flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 5px; }
+        .btn-remove { background: #f44336; color: white; border: none; padding: 8px 12px; border-radius: 5px; cursor: pointer; }
+        .btn-save { background: #2196F3; color: white; width: 100%; margin-top: 10px; padding: 10px; }
+        .btn-close { background: #9e9e9e; color: white; width: 100%; margin-top: 5px; padding: 10px; }
+        
+        .action-btn {
+            position: fixed; left: 50%; transform: translateX(-50%);
+            color: white; padding: 15px 20px; border-radius: 25px;
+            font-size: 15px; font-weight: bold; box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            cursor: pointer; display: none; z-index: 1000; border: none; width: 90%; max-width: 500px; text-align: center;
         }
-        .btn {
-            padding: 12px 20px;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            cursor: pointer;
-            font-weight: bold;
-        }
-        .btn-add {
-            background: #4CAF50;
-            color: white;
-        }
-        .btn-add:hover {
-            background: #45a049;
-        }
-        .btn-edit {
-            background: #2196F3;
-            color: white;
-            margin-top: 8px;
-            width: 100%;
-            padding: 10px;
-        }
-        .result {
-            background: #FFF2CC;
-            padding: 10px;
-            border-radius: 8px;
-            text-align: center;
-            font-size: 16px;
-            font-weight: bold;
-            margin-bottom: 8px;
-        }
-        .total {
-            background: #C6EFCE;
-            padding: 10px;
-            border-radius: 8px;
-            text-align: center;
-            font-size: 18px;
-            font-weight: bold;
-            color: #006100;
-        }
-        .edit-section {
-            display: none;
-            margin-top: 10px;
-            padding: 10px;
-            background: #f9f9f9;
-            border-radius: 8px;
-        }
-        .edit-section.show {
-            display: block;
-        }
-        .edit-item {
-            display: flex;
-            gap: 5px;
-            margin-bottom: 5px;
-            align-items: center;
-        }
-        .edit-item input {
-            flex: 1;
-            padding: 8px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-        }
-        .btn-remove {
-            background: #f44336;
-            color: white;
-            border: none;
-            padding: 8px 12px;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-        .btn-save {
-            background: #2196F3;
-            color: white;
-            width: 100%;
-            margin-top: 10px;
-            padding: 10px;
-        }
-        .btn-close {
-            background: #9e9e9e;
-            color: white;
-            width: 100%;
-            margin-top: 5px;
-            padding: 10px;
-        }
-        .sync-btn {
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: #FF9800;
-            color: white;
-            padding: 15px 30px;
-            border-radius: 25px;
-            font-size: 16px;
-            font-weight: bold;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-            cursor: pointer;
-            display: none;
-            z-index: 1000;
-        }
-        .sync-btn.show {
-            display: block;
-        }
-        .sync-btn:hover {
-            background: #F57C00;
-        }
+        .sync-btn { bottom: 80px; background: #FF9800; }
+        .export-btn { bottom: 20px; background: #9C27B0; }
+        .action-btn.show { display: block; }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1> Нормы цеха 188</h1>
-        <div class="status-bar" id="status-bar">
-            🟢 Онлайн
-        </div>
+        <h1>📊 Нормы цеха 188</h1>
+        <div class="status-bar" id="status-bar">🟢 Онлайн</div>
         <div id="cards"></div>
     </div>
 
-    <button class="sync-btn" id="sync-btn" onclick="syncData()">
-        🔄 Синхронизировать данные
+    <button class="action-btn sync-btn" id="sync-btn" onclick="syncData()">
+        🔄 Синхронизировать с Google
     </button>
 
+    <button class="action-btn export-btn" id="export-btn" onclick="exportAndReset()">
+        💾 Сохранить в Google, скачать Excel и сбросить
+    </button>
+
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
     <script src="sync.js"></script>
     <script>
-        // Данные
         const defaultData = [
-            {id: 1, name: "10-300 Перемещение, укладка тары эл штабелером", time: 0.28, values: []},
-            {id: 2, name: "50-300 Перемещение по скл кран-балкой", time: 0.34, values: []},
-            {id: 3, name: "50-450 Погрузка, выгрузка кран-балкой", time: 0.34, values: []},
-            {id: 4, name: "10-300 Погрузка, выгрузка пленки вручную", time: 0.56, values: []},
-            {id: 5, name: "50-300 Перемещение по скл рохлей", time: 0.28, values: []},
-            {id: 6, name: "50-500 Подъем, перемещение, укладка ПКИ эл штабелером", time: 0.28, values: []},
-            {id: 7, name: "10-300 Подъем, перемещение, укладка ПКИ тележкой", time: 0.28, values: []},
-            {id: 8, name: "50-300 Выгрузка ПКИ из машины эл. штабелером", time: 0.36, values: []},
-            {id: 9, name: "10-50 Погрузка, выгрузка материалов вручную", time: 0.58, values: []},
-            {id: 10, name: "10-50 Погрузка, выгрузка материалов эл штабелером", time: 0.3, values: []},
-            {id: 11, name: "10-50 Погрузка, выгрузка материалов тележкой", time: 0.36, values: []},
-            {id: 12, name: "50-250 Перемещение материалов тележкой", time: 0.28, values: []},
-            {id: 13, name: "50-250 Перемещение материалов эл штабелером", time: 0.28, values: []},
-            {id: 14, name: "10-50 Перемещение материалов вручную", time: 0.28, values: []},
-            {id: 15, name: "10-200 Выгрузка-погрузка ТМЦ вручную", time: 0.51, values: []},
-            {id: 16, name: "10-100 Укладка ТМЦ вручную", time: 0.42, values: []},
-            {id: 17, name: "10-50 Погрузка выгрузка бочек", time: 0.53, values: []},
-            {id: 18, name: "30-300 Выдача ТМЦ в цех рохлей", time: 0.51, values: []},
-            {id: 19, name: "250-500 Выдача ТМЦ в цех с помощью электроштабелера", time: 0.36, values: []},
-            {id: 20, name: "100-500 Выгрузка-погрузка препрега с помощью рохли", time: 0.30, values: []},
-            {id: 21, name: "100-500 Перемещение и укладка препрега с помощью рохли", time: 0.28, values: []},
-            {id: 22, name: "100-300 Погрузка-выгрузка ящиков БПЛА с помощью крана", time: 0.26, values: []},
-            {id: 23, name: "10-300 Укладка, сортировка и перемещение ящиков БПЛА вручную", time: 0.25, values: []},
-            {id: 24, name: "пленка машиной", time: 0.0, values: []},
-            {id: 25, name: "Стружка машиной", time: 0.0, values: []},
-            {id: 26, name: "картон машиной", time: 0.0, values: []}
+            {id: 1, name: "10-300 Перемещение, укладка тары эл штабелером", time: 0.28, values: [], synced: false},
+            {id: 2, name: "50-300 Перемещение по скл кран-балкой", time: 0.34, values: [], synced: false},
+            {id: 3, name: "50-450 Погрузка, выгрузка кран-балкой", time: 0.34, values: [], synced: false},
+            {id: 4, name: "10-300 Погрузка, выгрузка пленки вручную", time: 0.56, values: [], synced: false},
+            {id: 5, name: "50-300 Перемещение по скл рохлей", time: 0.28, values: [], synced: false},
+            {id: 6, name: "50-500 Подъем, перемещение, укладка ПКИ эл штабелером", time: 0.28, values: [], synced: false},
+            {id: 7, name: "10-300 Подъем, перемещение, укладка ПКИ тележкой", time: 0.28, values: [], synced: false},
+            {id: 8, name: "50-300 Выгрузка ПКИ из машины эл. штабелером", time: 0.36, values: [], synced: false},
+            {id: 9, name: "10-50 Погрузка, выгрузка материалов вручную", time: 0.58, values: [], synced: false},
+            {id: 10, name: "10-50 Погрузка, выгрузка материалов эл штабелером", time: 0.3, values: [], synced: false},
+            {id: 11, name: "10-50 Погрузка, выгрузка материалов тележкой", time: 0.36, values: [], synced: false},
+            {id: 12, name: "50-250 Перемещение материалов тележкой", time: 0.28, values: [], synced: false},
+            {id: 13, name: "50-250 Перемещение материалов эл штабелером", time: 0.28, values: [], synced: false},
+            {id: 14, name: "10-50 Перемещение материалов вручную", time: 0.28, values: [], synced: false},
+            {id: 15, name: "10-200 Выгрузка-погрузка ТМЦ вручную", time: 0.51, values: [], synced: false},
+            {id: 16, name: "10-100 Укладка ТМЦ вручную", time: 0.42, values: [], synced: false},
+            {id: 17, name: "10-50 Погрузка выгрузка бочек", time: 0.53, values: [], synced: false},
+            {id: 18, name: "30-300 Выдача ТМЦ в цех рохлей", time: 0.51, values: [], synced: false},
+            {id: 19, name: "250-500 Выдача ТМЦ в цех с помощью электроштабелера", time: 0.36, values: [], synced: false},
+            {id: 20, name: "100-500 Выгрузка-погрузка препрега с помощью рохли", time: 0.30, values: [], synced: false},
+            {id: 21, name: "100-500 Перемещение и укладка препрега с помощью рохли", time: 0.28, values: [], synced: false},
+            {id: 22, name: "100-300 Погрузка-выгрузка ящиков БПЛА с помощью крана", time: 0.26, values: [], synced: false},
+            {id: 23, name: "10-300 Укладка, сортировка и перемещение ящиков БПЛА вручную", time: 0.25, values: [], synced: false},
+            {id: 24, name: "пленка машиной", time: 0.0, values: [], synced: false},
+            {id: 25, name: "Стружка машиной", time: 0.0, values: [], synced: false},
+            {id: 26, name: "картон машиной", time: 0.0, values: [], synced: false}
         ];
 
-        // Загрузка данных
         function loadData() {
             const saved = localStorage.getItem('shop188_data');
-            return saved ? JSON.parse(saved) : defaultData;
+            if (saved) {
+                const parsed = JSON.parse(saved);
+                // Добавляем synced:false для старых данных без этого поля
+                return parsed.map(item => ({...item, synced: item.synced || false}));
+            }
+            return defaultData;
         }
 
-        // Сохранение данных
         function saveData(data) {
             localStorage.setItem('shop188_data', JSON.stringify(data));
             checkSyncStatus();
         }
 
-        // Подсчет суммы
         function calculateSum(values) {
             return values.reduce((sum, val) => sum + Number(val), 0);
         }
 
-        // Отрисовка карточек
         function render() {
             const data = loadData();
             const container = document.getElementById('cards');
@@ -269,6 +139,7 @@
                     <div class="card-header">
                         <span class="card-number">№${item.id}</span>
                         ${item.name}
+                        ${item.synced ? '<span style="color: #4CAF50; font-size: 12px;">✅</span>' : ''}
                     </div>
                     <div class="card-meta">Норма времени: ${item.time}</div>
                     <div class="input-group">
@@ -295,67 +166,185 @@
             });
         }
 
-        // Добавить значение
         function addValue(index) {
             const data = loadData();
             const input = document.getElementById(`input-${index}`);
             const value = Number(input.value);
-            
             if (value !== 0) {
                 data[index].values.push(value);
+                data[index].synced = false; // Сбрасываем флаг при изменении
                 saveData(data);
                 input.value = '';
                 render();
-            } else {
-                alert('Введите число');
-            }
+            } else { alert('Введите число'); }
         }
 
-        // Переключить редактирование
         function toggleEdit(index) {
-            const editSection = document.getElementById(`edit-${index}`);
-            editSection.classList.toggle('show');
+            document.getElementById(`edit-${index}`).classList.toggle('show');
         }
 
-        // Изменить значение
         function changeValue(index, valueIndex, newValue) {
             const data = loadData();
             data[index].values[valueIndex] = Number(newValue);
+            data[index].synced = false; // Сбрасываем флаг при изменении
             saveData(data);
             render();
         }
 
-        // Удалить значение
         function removeValue(index, valueIndex) {
             const data = loadData();
             data[index].values.splice(valueIndex, 1);
+            data[index].synced = false;
             saveData(data);
             render();
         }
 
-        // Сохранить редактирование
-        function saveEdit(index) {
-            toggleEdit(index);
+        function saveEdit(index) { toggleEdit(index); }
+
+        // Получаем только НЕ отправленные данные
+        function getUnsyncedData() {
+            const data = loadData();
+            return data.filter(item => !item.synced && item.values.length > 0);
         }
 
-        // Проверка статуса синхронизации
-        function checkSyncStatus() {
-            const lastSync = localStorage.getItem('last_sync');
-            const hasData = localStorage.getItem('shop188_data');
-            const syncBtn = document.getElementById('sync-btn');
+        // Отметить данные как отправленные
+        function markAsSynced() {
+            const data = loadData();
+            data.forEach(item => {
+                if (item.values.length > 0) {
+                    item.synced = true;
+                }
+            });
+            saveData(data);
+            render();
+        }
+
+        // Синхронизация с Google (только новые данные)
+        async function syncData() {
+            const unsyncedData = getUnsyncedData();
             
-            if (hasData && (!lastSync || new Date(lastSync) < new Date(Date.now() - 3600000))) {
-                syncBtn.classList.add('show');
-            } else {
-                syncBtn.classList.remove('show');
+            if (unsyncedData.length === 0) {
+                alert('✅ Нет новых данных для отправки. Все данные уже сохранены в Google Таблице.');
+                return;
+            }
+
+            if (!navigator.onLine) {
+                alert('🔴 Нет интернета! Подключитесь к сети для синхронизации.');
+                return;
+            }
+
+            if (!confirm(`📤 Отправить ${unsyncedData.length} новых записей в Google Таблицу?`)) {
+                return;
+            }
+
+            try {
+                const rows = unsyncedData.map(item => ({
+                    id: item.id,
+                    name: item.name,
+                    time: item.time,
+                    price: item.values.join('+'),
+                    quantity: calculateSum(item.values)
+                }));
+
+                await fetch(GOOGLE_SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ data: rows })
+                });
+
+                markAsSynced();
+                alert('✅ Данные успешно отправлены в Google Таблицу!');
+            } catch (error) {
+                alert('❌ Ошибка синхронизации: ' + error.message);
             }
         }
 
-        // Проверка онлайн/оффлайн
+        // Экспорт + Синхронизация + Сброс
+        async function exportAndReset() {
+            const data = loadData();
+            const unsyncedData = getUnsyncedData();
+            const hasInternet = navigator.onLine;
+            const hasGoogleScript = typeof GOOGLE_SCRIPT_URL !== 'undefined' && GOOGLE_SCRIPT_URL.includes('script.google.com');
+
+            if (!confirm('⚠️ Сохранить данные в Google Таблицу, скачать Excel-файл и сбросить приложение?')) {
+                return;
+            }
+
+            let googleSynced = false;
+
+            // 1. Отправка только НОВЫХ данных в Google
+            if (hasInternet && hasGoogleScript && unsyncedData.length > 0) {
+                try {
+                    const rows = unsyncedData.map(item => ({
+                        id: item.id, name: item.name, time: item.time,
+                        price: item.values.join('+'), quantity: calculateSum(item.values)
+                    }));
+                    await fetch(GOOGLE_SCRIPT_URL, {
+                        method: 'POST', mode: 'no-cors',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ data: rows })
+                    });
+                    googleSynced = true;
+                    console.log('✅ Отправлено новых записей:', unsyncedData.length);
+                } catch (error) {
+                    console.error("❌ Ошибка синхронизации:", error);
+                }
+            } else if (hasInternet && hasGoogleScript && unsyncedData.length === 0) {
+                googleSynced = true; // Все данные уже отправлены
+            }
+
+            // 2. Создание Excel со ВСЕМИ данными (включая старые)
+            const wb = XLSX.utils.book_new();
+            const wsData = [['ID', 'Наименование работ', 'Норма времени', 'Расценка', 'Количество']];
+            
+            data.forEach(item => {
+                if (item.values.length > 0) {
+                    wsData.push([item.id, item.name, item.time, item.values.join('+'), calculateSum(item.values)]);
+                }
+            });
+            
+            const ws = XLSX.utils.aoa_to_sheet(wsData);
+            XLSX.utils.book_append_sheet(wb, ws, 'Нормы цеха 188');
+            const filename = `Нормы_188_${new Date().toISOString().split('T')[0]}.xlsx`;
+            XLSX.writeFile(wb, filename);
+
+            // 3. Сброс только если успешно отправили
+            setTimeout(() => {
+                if (googleSynced) {
+                    if (confirm('✅ Данные сохранены в Google Таблицу и Excel-файл скачан!\n\nОчистить приложение для новой смены?')) {
+                        localStorage.removeItem('shop188_data');
+                        localStorage.removeItem('last_sync');
+                        location.reload();
+                    }
+                } else {
+                    alert('⚠️ ВНИМАНИЕ!\n\n' + 
+                          (hasInternet ? 'Не удалось подключиться к Google Таблице.' : 'Нет интернета - Google Таблица не обновлена.') + 
+                          '\n\nExcel-файл скачан в папку "Загрузки" - данные не потеряны!\n\n' +
+                          'Приложение НЕ очищено. Данные останутся, пока не будут отправлены в Google Таблицу.');
+                }
+            }, 1000);
+        }
+
+        function checkSyncStatus() {
+            const data = loadData();
+            const hasEnteredData = data.some(item => item.values.length > 0);
+            const syncBtn = document.getElementById('sync-btn');
+            const exportBtn = document.getElementById('export-btn');
+            
+            if (hasEnteredData) {
+                syncBtn.classList.add('show');
+                exportBtn.classList.add('show');
+            } else {
+                syncBtn.classList.remove('show');
+                exportBtn.classList.remove('show');
+            }
+        }
+
         function updateStatus() {
             const statusBar = document.getElementById('status-bar');
             if (navigator.onLine) {
-                statusBar.textContent = '🟢 Онлайн';
+                statusBar.textContent = ' Онлайн';
                 statusBar.className = 'status-bar';
             } else {
                 statusBar.textContent = '🔴 Оффлайн - данные сохраняются локально';
@@ -366,7 +355,6 @@
         window.addEventListener('online', updateStatus);
         window.addEventListener('offline', updateStatus);
 
-        // Инициализация
         render();
         updateStatus();
         checkSyncStatus();
