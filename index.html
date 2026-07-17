@@ -11,7 +11,7 @@
         h1 { text-align: center; color: #1976D2; margin-bottom: 15px; font-size: 22px; }
         .status-bar { background: #4CAF50; color: white; padding: 10px; border-radius: 8px; text-align: center; margin-bottom: 10px; font-size: 14px; }
         .status-bar.offline { background: #f44336; }
-        .counter { background: #FF9800; color: white; padding: 10px; border-radius: 8px; text-align: center; margin-bottom: 15px; font-size: 14px; font-weight: bold; }
+        .counter { background: #FF9800; color: white; padding: 10px; border-radius: 8px; text-align: center; margin-bottom: 15px; font-size: 14px; font-weight: bold; display: none; }
         .card { background: white; border-radius: 10px; padding: 15px; margin-bottom: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         .card-header { font-weight: bold; font-size: 15px; margin-bottom: 8px; color: #333; line-height: 1.3; }
         .card-number { display: inline-block; background: #1976D2; color: white; padding: 3px 10px; border-radius: 12px; font-size: 14px; font-weight: bold; margin-right: 8px; }
@@ -40,17 +40,26 @@
         .sync-btn { background: #2196F3; }
         .export-btn { background: #FF9800; }
         .clear-btn { background: #f44336; }
+        
+        .loading { text-align: center; padding: 20px; color: #666; font-size: 14px; }
+        .loading-spinner { border: 3px solid #f3f3f3; border-top: 3px solid #1976D2; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin: 0 auto 10px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>📊 Нормы цеха 188</h1>
         <div class="status-bar" id="status-bar">🟢 Онлайн</div>
-        <div class="counter" id="counter" style="display: none;">⏳ Ожидает отправки: 0 записей</div>
-        <div id="cards"></div>
+        <div class="counter" id="counter">⏳ Ожидает отправки: 0 записей</div>
+        <div id="cards">
+            <div class="loading">
+                <div class="loading-spinner"></div>
+                Загрузка карточек...
+            </div>
+        </div>
 
         <div class="actions-block">
-            <h3>⚙️ Действия</h3>
+            <h3>️ Действия</h3>
             <button class="action-btn sync-btn" onclick="runSync()">🔄 Синхронизировать с Google</button>
             <button class="action-btn export-btn" onclick="downloadExcel()">📥 Скачать Excel из Google Таблицы</button>
             <button class="action-btn clear-btn" onclick="clearAll()">🗑️ Очистить всё</button>
@@ -58,9 +67,10 @@
     </div>
 
     <script>
-        // ✅ ВАША НОВАЯ ССЫЛКА УЖЕ ВСТАВЛЕНА СЮДА
+        // ✅ ВАША ССЫЛКА
         const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwDt2CpnH4dIArQt8MP_4cCTCG2iGYcaPCtxE6B9j7xVU5Jq_928CzRZ5BFhKV6ljrS1g/exec';
 
+        // Данные — 26 работ
         const defaultData = [
             {id: 1, name: "10-300 Перемещение, укладка тары эл штабелером", time: 0.28, values: [], synced: false},
             {id: 2, name: "50-300 Перемещение по скл кран-балкой", time: 0.34, values: [], synced: false},
@@ -90,21 +100,38 @@
             {id: 26, name: "картон машиной", time: 0.0, values: [], synced: false}
         ];
 
+        // Загрузка данных из localStorage
         function loadData() {
-            const saved = localStorage.getItem('shop188_data');
-            if (saved) return JSON.parse(saved).map(item => ({...item, synced: item.synced || false}));
+            try {
+                const saved = localStorage.getItem('shop188_data');
+                if (saved) {
+                    return JSON.parse(saved).map(item => ({...item, synced: item.synced || false}));
+                }
+            } catch (e) {
+                console.error('Ошибка загрузки данных:', e);
+            }
             return defaultData;
         }
 
+        // Сохранение данных
         function saveData(data) {
-            localStorage.setItem('shop188_data', JSON.stringify(data));
+            try {
+                localStorage.setItem('shop188_data', JSON.stringify(data));
+            } catch (e) {
+                console.error('Ошибка сохранения:', e);
+            }
             updateCounter();
         }
 
-        function calculateSum(values) { return values.reduce((sum, val) => sum + Number(val), 0); }
+        // Подсчёт суммы
+        function calculateSum(values) {
+            return values.reduce((sum, val) => sum + Number(val), 0);
+        }
 
+        // Обновление счётчика
         function updateCounter() {
-            const unsynced = getUnsyncedData().length;
+            const data = loadData();
+            const unsynced = data.filter(item => !item.synced && item.values.length > 0).length;
             const counter = document.getElementById('counter');
             if (unsynced > 0) {
                 counter.textContent = '⏳ Ожидает отправки: ' + unsynced + ' записей';
@@ -114,61 +141,85 @@
             }
         }
 
+        // Отрисовка карточек — БЫСТРАЯ и БЕЗ внешних зависимостей
         function render() {
             const data = loadData();
             const container = document.getElementById('cards');
+            
+            // Очищаем контейнер
             container.innerHTML = '';
             
+            // Создаём карточки
             for (let i = 0; i < data.length; i++) {
                 const item = data[i];
                 const sum = calculateSum(item.values);
+                
                 const card = document.createElement('div');
                 card.className = 'card';
                 
+                // Формируем HTML карточки
                 let html = '<div class="card-header"><span class="card-number">№' + item.id + '</span> ' + item.name;
-                if (item.synced) html += ' <span style="color: #4CAF50; font-size: 12px; margin-left: 5px;">✅</span>';
+                if (item.synced) {
+                    html += ' <span style="color: #4CAF50; font-size: 12px; margin-left: 5px;">✅</span>';
+                }
                 html += '</div>';
+                
                 html += '<div class="card-meta">Норма времени: ' + item.time + '</div>';
-                html += '<div class="input-group"><input type="number" id="input-' + i + '" placeholder="Введите число" step="0.01">';
-                html += '<button class="btn btn-add" onclick="addValue(' + i + ')">➕ Добавить</button></div>';
+                
+                html += '<div class="input-group">';
+                html += '<input type="number" id="input-' + i + '" placeholder="Введите число" step="0.01">';
+                html += '<button class="btn btn-add" onclick="addValue(' + i + ')"> Добавить</button>';
+                html += '</div>';
                 
                 if (item.values.length > 0) {
                     html += '<div class="result">Расценка: ' + item.values.join('+') + '</div>';
                     html += '<div class="total">Количество: ' + sum + '</div>';
                     html += '<button class="btn btn-edit" onclick="toggleEdit(' + i + ')">✏️ Редактировать значения</button>';
+                    
                     html += '<div class="edit-section" id="edit-' + i + '">';
                     for (let j = 0; j < item.values.length; j++) {
-                        html += '<div class="edit-item"><input type="number" value="' + item.values[j] + '" onchange="changeValue(' + i + ',' + j + ',this.value)" step="0.01">';
-                        html += '<button class="btn-remove" onclick="removeValue(' + i + ',' + j + ')">🗑️</button></div>';
+                        html += '<div class="edit-item">';
+                        html += '<input type="number" value="' + item.values[j] + '" onchange="changeValue(' + i + ',' + j + ',this.value)" step="0.01">';
+                        html += '<button class="btn-remove" onclick="removeValue(' + i + ',' + j + ')">️</button>';
+                        html += '</div>';
                     }
-                    html += '<button class="btn btn-save" onclick="toggleEdit(' + i + ')">Закрыть</button></div>';
+                    html += '<button class="btn btn-save" onclick="toggleEdit(' + i + ')">Закрыть</button>';
+                    html += '</div>';
                 }
                 
                 card.innerHTML = html;
                 container.appendChild(card);
             }
+            
             updateCounter();
         }
 
+        // Добавить значение
         function addValue(index) {
             const data = loadData();
             const input = document.getElementById('input-' + index);
             const value = Number(input.value);
-            if (value !== 0) {
+            
+            if (value !== 0 && !isNaN(value)) {
                 data[index].values.push(value);
                 data[index].synced = false;
                 saveData(data);
                 input.value = '';
                 render();
             } else {
-                alert('Введите число');
+                alert('Введите число больше 0');
             }
         }
 
+        // Переключить редактирование
         function toggleEdit(index) {
-            document.getElementById('edit-' + index).classList.toggle('show');
+            const editSection = document.getElementById('edit-' + index);
+            if (editSection) {
+                editSection.classList.toggle('show');
+            }
         }
 
+        // Изменить значение
         function changeValue(index, valueIndex, newValue) {
             const data = loadData();
             data[index].values[valueIndex] = Number(newValue);
@@ -177,6 +228,7 @@
             render();
         }
 
+        // Удалить значение
         function removeValue(index, valueIndex) {
             const data = loadData();
             data[index].values.splice(valueIndex, 1);
@@ -185,49 +237,117 @@
             render();
         }
 
+        // Получить несинхронизированные данные
         function getUnsyncedData() {
-            return loadData().filter(item => !item.synced && item.values.length > 0);
+            const data = loadData();
+            return data.filter(item => !item.synced && item.values.length > 0);
         }
 
+        // Отметить как синхронизированные
         function markAsSynced() {
             const data = loadData();
-            data.forEach(item => { if (item.values.length > 0) item.synced = true; });
+            data.forEach(item => {
+                if (item.values.length > 0) {
+                    item.synced = true;
+                }
+            });
             saveData(data);
             render();
         }
 
+        // Отправка данных в Google
         async function sendDataToGoogle(dataToSend) {
             try {
-                const rows = dataToSend.map(item => ({ id: item.id, name: item.name, time: item.time, price: item.values.join('+'), quantity: calculateSum(item.values) }));
-                await fetch(GOOGLE_SCRIPT_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ data: rows }) });
+                const rows = dataToSend.map(item => ({
+                    id: item.id,
+                    name: item.name,
+                    time: item.time,
+                    price: item.values.join('+'),
+                    quantity: calculateSum(item.values)
+                }));
+                
+                await fetch(GOOGLE_SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ data: rows })
+                });
                 return true;
-            } catch (error) { return false; }
+            } catch (error) {
+                console.error('Ошибка отправки:', error);
+                return false;
+            }
         }
 
+        // Очистка Google таблицы
         async function clearGoogleSheet() {
             try {
-                await fetch(GOOGLE_SCRIPT_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'clear' }) });
+                await fetch(GOOGLE_SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'clear' })
+                });
                 return true;
-            } catch (error) { return false; }
+            } catch (error) {
+                console.error('Ошибка очистки:', error);
+                return false;
+            }
         }
 
+        // Получение данных из Google
         async function getDataFromGoogle() {
             try {
                 const response = await fetch(GOOGLE_SCRIPT_URL);
                 const result = await response.json();
                 return result.data;
             } catch (error) {
-                console.error('Ошибка получения данных:', error);
+                console.error('Ошибка получения:', error);
                 return null;
             }
         }
 
+        // Синхронизация
+        async function runSync() {
+            const unsynced = getUnsyncedData();
+            
+            if (unsynced.length === 0) {
+                return alert('✅ Нет новых данных. Всё уже отправлено в Google Таблицу.');
+            }
+            
+            if (!navigator.onLine) {
+                return alert(' Нет интернета! Подключитесь к сети.');
+            }
+            
+            if (!confirm('📤 Отправить ' + unsynced.length + ' новых записей в Google Таблицу?\n\nДанные останутся в приложении.')) {
+                return;
+            }
+            
+            const syncBtn = document.querySelector('.sync-btn');
+            syncBtn.disabled = true;
+            syncBtn.textContent = '⏳ Отправка...';
+            
+            const success = await sendDataToGoogle(unsynced);
+            
+            if (success) {
+                markAsSynced();
+                alert('✅ Данные успешно отправлены в Google Таблицу!\n\nПриложение НЕ очищено — можно продолжать работу.');
+            } else {
+                alert('❌ Ошибка отправки. Проверьте интернет.');
+            }
+            
+            syncBtn.disabled = false;
+            syncBtn.textContent = '🔄 Синхронизировать с Google';
+        }
+
+        // Динамическая загрузка SheetJS только когда нужно
         function loadSheetJS() {
             return new Promise((resolve, reject) => {
                 if (typeof XLSX !== 'undefined') {
                     resolve();
                     return;
                 }
+                
                 const script = document.createElement('script');
                 script.src = 'https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js';
                 script.onload = () => resolve();
@@ -236,21 +356,7 @@
             });
         }
 
-        async function runSync() {
-            const unsynced = getUnsyncedData();
-            if (unsynced.length === 0) return alert('✅ Нет новых данных. Всё уже отправлено в Google Таблицу.');
-            if (!navigator.onLine) return alert('🔴 Нет интернета! Подключитесь к сети.');
-            if (!confirm('📤 Отправить ' + unsynced.length + ' новых записей в Google Таблицу?\n\nДанные останутся в приложении.')) return;
-            
-            const success = await sendDataToGoogle(unsynced);
-            if (success) { 
-                markAsSynced(); 
-                alert('✅ Данные успешно отправлены в Google Таблицу!\n\nПриложение НЕ очищено — можно продолжать работу.'); 
-            } else { 
-                alert('❌ Ошибка отправки. Проверьте интернет.'); 
-            }
-        }
-
+        // Скачать Excel
         async function downloadExcel() {
             if (!navigator.onLine) {
                 return alert('🔴 Для скачивания Excel нужен интернет!\n\nПодключитесь к сети и попробуйте снова.');
@@ -258,18 +364,21 @@
             
             const exportBtn = document.querySelector('.export-btn');
             const originalText = exportBtn.textContent;
-            exportBtn.textContent = '⏳ Загрузка данных из таблицы...';
+            exportBtn.textContent = '⏳ Загрузка данных...';
             exportBtn.disabled = true;
             
             try {
+                // Получаем данные из Google
                 const tableData = await getDataFromGoogle();
                 if (!tableData) {
-                    alert('❌ Не удалось получить данные из Google Таблицы. Проверьте интернет и настройки скрипта.');
+                    alert('❌ Не удалось получить данные из Google Таблицы.');
                     return;
                 }
                 
+                // Загружаем библиотеку
                 await loadSheetJS();
                 
+                // Создаём Excel
                 const wb = XLSX.utils.book_new();
                 const wsData = [['ID', 'Наименование работ с диапазоном объемов (кг)', 'Норма времени', 'Расценка', 'Количество']];
                 
@@ -292,9 +401,12 @@
                         }
                     }
                 }
+                
                 for (let C = 0; C <= range.e.c; ++C) {
                     const cell = ws[XLSX.utils.encode_cell({r: 0, c: C})];
-                    if (cell) cell.s = { font: { name: 'Times New Roman', sz: 10, bold: true }, alignment: { wrapText: true, vertical: 'center', horizontal: 'center' } };
+                    if (cell) {
+                        cell.s = { font: { name: 'Times New Roman', sz: 10, bold: true }, alignment: { wrapText: true, vertical: 'center', horizontal: 'center' } };
+                    }
                 }
 
                 ws['!margins'] = { left: 0.3, right: 0.3, top: 0.3, bottom: 0.3, header: 0.2, footer: 0.2 };
@@ -312,35 +424,68 @@
             }
         }
 
+        // Очистить всё
         async function clearAll() {
             const data = loadData();
             const hasData = data.some(item => item.values.length > 0);
             
-            if (!hasData) return alert('✅ Приложение уже пустое. Нечего очищать.');
-            if (!confirm('⚠️ ВНИМАНИЕ!\n\nЭто действие:\n1. Очистит Google Таблицу\n2. Очистит все данные в приложении\n\nВы уверены?')) return;
-            if (!navigator.onLine) return alert('🔴 Нет интернета! Для очистки Google Таблицы нужно подключение.');
+            if (!hasData) {
+                return alert('✅ Приложение уже пустое. Нечего очищать.');
+            }
+            
+            if (!confirm('⚠️ ВНИМАНИЕ!\n\nЭто действие:\n1. Очистит Google Таблицу\n2. Очистит все данные в приложении\n\nВы уверены?')) {
+                return;
+            }
+            
+            if (!navigator.onLine) {
+                return alert('🔴 Нет интернета! Для очистки Google Таблицы нужно подключение.');
+            }
+            
+            const clearBtn = document.querySelector('.clear-btn');
+            clearBtn.disabled = true;
+            clearBtn.textContent = '⏳ Очистка...';
             
             const cleared = await clearGoogleSheet();
+            
             if (cleared) {
                 localStorage.removeItem('shop188_data');
                 alert('🎉 Всё очищено! Приложение и Google Таблица готовы к новой смене.');
                 location.reload();
             } else {
                 alert('❌ Не удалось очистить Google Таблицу.');
+                clearBtn.disabled = false;
+                clearBtn.textContent = '🗑️ Очистить всё';
             }
         }
 
+        // Обновление статуса онлайн/оффлайн
         function updateStatus() {
             const bar = document.getElementById('status-bar');
-            if (navigator.onLine) { bar.textContent = '🟢 Онлайн'; bar.className = 'status-bar'; } 
-            else { bar.textContent = '🔴 Оффлайн - данные сохраняются локально'; bar.className = 'status-bar offline'; }
+            if (navigator.onLine) {
+                bar.textContent = '🟢 Онлайн';
+                bar.className = 'status-bar';
+            } else {
+                bar.textContent = ' Оффлайн - данные сохраняются локально';
+                bar.className = 'status-bar offline';
+            }
         }
 
+        // Слушатели событий
         window.addEventListener('online', updateStatus);
         window.addEventListener('offline', updateStatus);
         
-        render();
-        updateStatus();
+        // === ГЛАВНОЕ: Отрисовка СРАЗУ при загрузке страницы ===
+        // Ждём когда DOM будет готов
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', function() {
+                render();
+                updateStatus();
+            });
+        } else {
+            // DOM уже готов
+            render();
+            updateStatus();
+        }
     </script>
 </body>
 </html>
