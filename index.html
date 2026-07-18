@@ -49,7 +49,7 @@
 <body>
     <div class="container">
         <h1>📊 Нормы цеха 188</h1>
-        <div class="status-bar" id="status-bar">🟢 Онлайн</div>
+        <div class="status-bar" id="status-bar"> Онлайн</div>
         <div class="counter" id="counter">⏳ Ожидает отправки: 0 записей</div>
         <div id="cards">
             <div class="loading">
@@ -104,7 +104,7 @@
                 if (saved) {
                     return JSON.parse(saved).map(item => ({
                         ...item, 
-                        syncedLength: item.syncedLength || 0 // Защита для старых данных
+                        syncedLength: item.syncedLength || 0
                     }));
                 }
             } catch (e) { console.error('Ошибка загрузки:', e); }
@@ -157,7 +157,7 @@
                 if (item.values.length > 0) {
                     html += '<div class="result">Расценка: ' + item.values.join('+') + '</div>';
                     html += '<div class="total">Количество: ' + sum + '</div>';
-                    html += '<button class="btn btn-edit" onclick="toggleEdit(' + i + ')">✏️ Редактировать значения</button>';
+                    html += '<button class="btn btn-edit" onclick="toggleEdit(' + i + ')">️ Редактировать значения</button>';
                     html += '<div class="edit-section" id="edit-' + i + '">';
                     for (let j = 0; j < item.values.length; j++) {
                         html += '<div class="edit-item"><input type="number" value="' + item.values[j] + '" onchange="changeValue(' + i + ',' + j + ',this.value)" step="0.01">';
@@ -177,7 +177,7 @@
             const value = Number(input.value);
             if (value !== 0 && !isNaN(value)) {
                 data[index].values.push(value);
-                // syncedLength не меняем, чтобы при следующей синхронизации отправился только этот новый элемент
+                // syncedLength НЕ меняется — при синхронизации отправится только это новое значение
                 saveData(data);
                 input.value = '';
                 render();
@@ -194,7 +194,7 @@
         function changeValue(index, valueIndex, newValue) {
             const data = loadData();
             data[index].values[valueIndex] = Number(newValue);
-            // Если пользователь редактирует, сбрасываем syncedLength, чтобы при синхронизации отправилось ВСЁ заново (перезапись)
+            // Сброс syncedLength — при синхронизации отправится ВЕСЬ массив для перезаписи
             data[index].syncedLength = 0;
             saveData(data);
             render();
@@ -203,7 +203,7 @@
         function removeValue(index, valueIndex) {
             const data = loadData();
             data[index].values.splice(valueIndex, 1);
-            // Если пользователь удаляет, сбрасываем syncedLength для полной перезаписи
+            // Сброс syncedLength — при синхронизации отправится ВЕСЬ массив для перезаписи
             data[index].syncedLength = 0;
             saveData(data);
             render();
@@ -220,7 +220,6 @@
             const data = loadData();
             data.forEach(item => { 
                 if (item.values.length > 0) {
-                    // После успешной синхронизации запоминаем, что все текущие значения уже отправлены
                     item.syncedLength = item.values.length;
                 }
             });
@@ -229,29 +228,36 @@
         }
 
         async function sendDataToGoogle(dataToSend) {
-            try {
-                const rows = dataToSend.map(item => {
-                    // Берем только НОВЫЕ значения, которые еще не были отправлены
-                    const newValues = item.values.slice(item.syncedLength || 0);
-                    const isFullUpdate = (item.syncedLength || 0) === 0; // Если syncedLength == 0, значит это полная перезапись (после редактирования)
-                    
-                    return {
-                        id: item.id, 
-                        name: item.name, 
-                        time: item.time,
-                        price: newValues.join('+'), 
-                        quantity: newValues.reduce((sum, val) => sum + Number(val), 0),
-                        isFullUpdate: isFullUpdate
-                    };
-                });
+            const rows = dataToSend.map(item => {
+                // Берём ТОЛЬКО новые значения
+                const newValues = item.values.slice(item.syncedLength || 0);
+                const isFullUpdate = (item.syncedLength || 0) === 0;
                 
+                console.log('Отправка ID:', item.id, 'Новые значения:', newValues, 'Сумма:', newValues.reduce((s, v) => s + Number(v), 0), 'Полное обновление:', isFullUpdate);
+                
+                return {
+                    id: item.id, 
+                    name: item.name, 
+                    time: item.time,
+                    price: newValues.join('+'), 
+                    quantity: newValues.reduce((sum, val) => sum + Number(val), 0),
+                    isFullUpdate: isFullUpdate
+                };
+            });
+            
+            console.log('Всего отправляется записей:', rows.length);
+            
+            try {
                 await fetch(GOOGLE_SCRIPT_URL, {
                     method: 'POST', mode: 'no-cors',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ data: rows })
                 });
                 return true;
-            } catch (error) { return false; }
+            } catch (error) { 
+                console.error('Ошибка отправки:', error);
+                return false; 
+            }
         }
 
         async function clearGoogleSheet() {
@@ -358,7 +364,7 @@
             if (!navigator.onLine) return alert('🔴 Нет интернета!');
             
             const clearBtn = document.querySelector('.clear-btn');
-            clearBtn.disabled = true; clearBtn.textContent = '⏳ Очистка...';
+            clearBtn.disabled = true; clearBtn.textContent = ' Очистка...';
             
             const cleared = await clearGoogleSheet();
             if (cleared) {
@@ -367,13 +373,13 @@
                 location.reload();
             } else {
                 alert('❌ Не удалось очистить.');
-                clearBtn.disabled = false; clearBtn.textContent = '🗑️ Очистить всё';
+                clearBtn.disabled = false; clearBtn.textContent = '️ Очистить всё';
             }
         }
 
         function updateStatus() {
             const bar = document.getElementById('status-bar');
-            if (navigator.onLine) { bar.textContent = '🟢 Онлайн'; bar.className = 'status-bar'; } 
+            if (navigator.onLine) { bar.textContent = ' Онлайн'; bar.className = 'status-bar'; } 
             else { bar.textContent = '🔴 Оффлайн - данные сохраняются локально'; bar.className = 'status-bar offline'; }
         }
 
