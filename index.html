@@ -40,10 +40,6 @@
         .sync-btn { background: #2196F3; }
         .export-btn { background: #FF9800; }
         .clear-btn { background: #f44336; }
-        
-        .loading { text-align: center; padding: 20px; color: #666; font-size: 14px; }
-        .loading-spinner { border: 3px solid #f3f3f3; border-top: 3px solid #1976D2; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; margin: 0 auto 10px; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
@@ -51,52 +47,46 @@
         <h1>📊 Нормы цеха 188</h1>
         <div class="status-bar" id="status-bar">🟢 Онлайн</div>
         <div class="counter" id="counter">⏳ Ожидает отправки: 0 записей</div>
-        <div id="cards">
-            <div class="loading">
-                <div class="loading-spinner"></div>
-                Загрузка карточек...
-            </div>
-        </div>
+        <div id="cards"></div>
 
         <div class="actions-block">
             <h3>⚙️ Действия</h3>
             <button class="action-btn sync-btn" onclick="runSync()">🔄 Синхронизировать с Google</button>
-            <button class="action-btn export-btn" onclick="downloadExcel()">📥 Скачать Excel из Google Таблицы</button>
+            <button class="action-btn export-btn" onclick="downloadExcel()"> Скачать Excel из Google Таблицы</button>
             <button class="action-btn clear-btn" onclick="clearAll()">🗑️ Очистить всё</button>
         </div>
     </div>
 
     <script>
-        // ✅ ВАША НОВАЯ ССЫЛКА УЖЕ ВСТАВЛЕНА СЮДА
         const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz5pGuK0zexI_H5tKwAd3LrYE5udPGTmWrATZCqOW212sBrCCs74VhvZ4haBjeBVJWA/exec';
 
         const defaultData = [
-            {id: 1, name: "10-300 Перемещение, укладка тары эл штабелером", time: 0.28, values: [], syncedLength: 0},
-            {id: 2, name: "50-300 Перемещение по скл кран-балкой", time: 0.34, values: [], syncedLength: 0},
-            {id: 3, name: "50-450 Погрузка, выгрузка кран-балкой", time: 0.34, values: [], syncedLength: 0},
-            {id: 4, name: "10-300 Погрузка, выгрузка пленки вручную", time: 0.56, values: [], syncedLength: 0},
-            {id: 5, name: "50-300 Перемещение по скл рохлей", time: 0.28, values: [], syncedLength: 0},
-            {id: 6, name: "50-500 Подъем, перемещение, укладка ПКИ эл штабелером", time: 0.28, values: [], syncedLength: 0},
-            {id: 7, name: "10-300 Подъем, перемещение, укладка ПКИ тележкой", time: 0.28, values: [], syncedLength: 0},
-            {id: 8, name: "50-300 Выгрузка ПКИ из машины эл. штабелером", time: 0.36, values: [], syncedLength: 0},
-            {id: 9, name: "10-50 Погрузка, выгрузка материалов вручную", time: 0.58, values: [], syncedLength: 0},
-            {id: 10, name: "10-50 Погрузка, выгрузка материалов эл штабелером", time: 0.3, values: [], syncedLength: 0},
-            {id: 11, name: "10-50 Погрузка, выгрузка материалов тележкой", time: 0.36, values: [], syncedLength: 0},
-            {id: 12, name: "50-250 Перемещение материалов тележкой", time: 0.28, values: [], syncedLength: 0},
-            {id: 13, name: "50-250 Перемещение материалов эл штабелером", time: 0.28, values: [], syncedLength: 0},
-            {id: 14, name: "10-50 Перемещение материалов вручную", time: 0.28, values: [], syncedLength: 0},
-            {id: 15, name: "10-200 Выгрузка-погрузка ТМЦ вручную", time: 0.51, values: [], syncedLength: 0},
-            {id: 16, name: "10-100 Укладка ТМЦ вручную", time: 0.42, values: [], syncedLength: 0},
-            {id: 17, name: "10-50 Погрузка выгрузка бочек", time: 0.53, values: [], syncedLength: 0},
-            {id: 18, name: "30-300 Выдача ТМЦ в цех рохлей", time: 0.51, values: [], syncedLength: 0},
-            {id: 19, name: "250-500 Выдача ТМЦ в цех с помощью электроштабелера", time: 0.36, values: [], syncedLength: 0},
-            {id: 20, name: "100-500 Выгрузка-погрузка препрега с помощью рохли", time: 0.30, values: [], syncedLength: 0},
-            {id: 21, name: "100-500 Перемещение и укладка препрега с помощью рохли", time: 0.28, values: [], syncedLength: 0},
-            {id: 22, name: "100-300 Погрузка-выгрузка ящиков БПЛА с помощью крана", time: 0.26, values: [], syncedLength: 0},
-            {id: 23, name: "10-300 Укладка, сортировка и перемещение ящиков БПЛА вручную", time: 0.25, values: [], syncedLength: 0},
-            {id: 24, name: "пленка машиной", time: 0.0, values: [], syncedLength: 0},
-            {id: 25, name: "Стружка машиной", time: 0.0, values: [], syncedLength: 0},
-            {id: 26, name: "картон машиной", time: 0.0, values: [], syncedLength: 0}
+            {id: 1, name: "10-300 Перемещение, укладка тары эл штабелером", time: 0.28, values: [], syncedLength: 0, needsFullUpdate: false},
+            {id: 2, name: "50-300 Перемещение по скл кран-балкой", time: 0.34, values: [], syncedLength: 0, needsFullUpdate: false},
+            {id: 3, name: "50-450 Погрузка, выгрузка кран-балкой", time: 0.34, values: [], syncedLength: 0, needsFullUpdate: false},
+            {id: 4, name: "10-300 Погрузка, выгрузка пленки вручную", time: 0.56, values: [], syncedLength: 0, needsFullUpdate: false},
+            {id: 5, name: "50-300 Перемещение по скл рохлей", time: 0.28, values: [], syncedLength: 0, needsFullUpdate: false},
+            {id: 6, name: "50-500 Подъем, перемещение, укладка ПКИ эл штабелером", time: 0.28, values: [], syncedLength: 0, needsFullUpdate: false},
+            {id: 7, name: "10-300 Подъем, перемещение, укладка ПКИ тележкой", time: 0.28, values: [], syncedLength: 0, needsFullUpdate: false},
+            {id: 8, name: "50-300 Выгрузка ПКИ из машины эл. штабелером", time: 0.36, values: [], syncedLength: 0, needsFullUpdate: false},
+            {id: 9, name: "10-50 Погрузка, выгрузка материалов вручную", time: 0.58, values: [], syncedLength: 0, needsFullUpdate: false},
+            {id: 10, name: "10-50 Погрузка, выгрузка материалов эл штабелером", time: 0.3, values: [], syncedLength: 0, needsFullUpdate: false},
+            {id: 11, name: "10-50 Погрузка, выгрузка материалов тележкой", time: 0.36, values: [], syncedLength: 0, needsFullUpdate: false},
+            {id: 12, name: "50-250 Перемещение материалов тележкой", time: 0.28, values: [], syncedLength: 0, needsFullUpdate: false},
+            {id: 13, name: "50-250 Перемещение материалов эл штабелером", time: 0.28, values: [], syncedLength: 0, needsFullUpdate: false},
+            {id: 14, name: "10-50 Перемещение материалов вручную", time: 0.28, values: [], syncedLength: 0, needsFullUpdate: false},
+            {id: 15, name: "10-200 Выгрузка-погрузка ТМЦ вручную", time: 0.51, values: [], syncedLength: 0, needsFullUpdate: false},
+            {id: 16, name: "10-100 Укладка ТМЦ вручную", time: 0.42, values: [], syncedLength: 0, needsFullUpdate: false},
+            {id: 17, name: "10-50 Погрузка выгрузка бочек", time: 0.53, values: [], syncedLength: 0, needsFullUpdate: false},
+            {id: 18, name: "30-300 Выдача ТМЦ в цех рохлей", time: 0.51, values: [], syncedLength: 0, needsFullUpdate: false},
+            {id: 19, name: "250-500 Выдача ТМЦ в цех с помощью электроштабелера", time: 0.36, values: [], syncedLength: 0, needsFullUpdate: false},
+            {id: 20, name: "100-500 Выгрузка-погрузка препрега с помощью рохли", time: 0.30, values: [], syncedLength: 0, needsFullUpdate: false},
+            {id: 21, name: "100-500 Перемещение и укладка препрега с помощью рохли", time: 0.28, values: [], syncedLength: 0, needsFullUpdate: false},
+            {id: 22, name: "100-300 Погрузка-выгрузка ящиков БПЛА с помощью крана", time: 0.26, values: [], syncedLength: 0, needsFullUpdate: false},
+            {id: 23, name: "10-300 Укладка, сортировка и перемещение ящиков БПЛА вручную", time: 0.25, values: [], syncedLength: 0, needsFullUpdate: false},
+            {id: 24, name: "пленка машиной", time: 0.0, values: [], syncedLength: 0, needsFullUpdate: false},
+            {id: 25, name: "Стружка машиной", time: 0.0, values: [], syncedLength: 0, needsFullUpdate: false},
+            {id: 26, name: "картон машиной", time: 0.0, values: [], syncedLength: 0, needsFullUpdate: false}
         ];
 
         function loadData() {
@@ -105,7 +95,8 @@
                 if (saved) {
                     return JSON.parse(saved).map(item => ({
                         ...item, 
-                        syncedLength: item.syncedLength || 0
+                        syncedLength: item.syncedLength !== undefined ? item.syncedLength : 0,
+                        needsFullUpdate: item.needsFullUpdate || false
                     }));
                 }
             } catch (e) { console.error('Ошибка загрузки:', e); }
@@ -122,8 +113,8 @@
         function updateCounter() {
             const data = loadData();
             const unsynced = data.filter(item => {
-                const newValues = item.values.slice(item.syncedLength || 0);
-                return newValues.length > 0;
+                const sl = item.syncedLength || 0;
+                return item.values.length > sl;
             }).length;
             const counter = document.getElementById('counter');
             if (unsynced > 0) {
@@ -145,8 +136,8 @@
                 const card = document.createElement('div');
                 card.className = 'card';
                 
-                const isNewData = (item.values.length > (item.syncedLength || 0));
-                const isFullySynced = !isNewData && item.values.length > 0;
+                const sl = item.syncedLength || 0;
+                const isFullySynced = (item.values.length > 0) && (item.values.length === sl);
                 
                 let html = '<div class="card-header"><span class="card-number">№' + item.id + '</span> ' + item.name;
                 if (isFullySynced) html += ' <span style="color: #4CAF50; font-size: 12px; margin-left: 5px;">✅</span>';
@@ -158,7 +149,7 @@
                 if (item.values.length > 0) {
                     html += '<div class="result">Расценка: ' + item.values.join('+') + '</div>';
                     html += '<div class="total">Количество: ' + sum + '</div>';
-                    html += '<button class="btn btn-edit" onclick="toggleEdit(' + i + ')">✏️ Редактировать значения</button>';
+                    html += '<button class="btn btn-edit" onclick="toggleEdit(' + i + ')">✏️ Редактировать</button>';
                     html += '<div class="edit-section" id="edit-' + i + '">';
                     for (let j = 0; j < item.values.length; j++) {
                         html += '<div class="edit-item"><input type="number" value="' + item.values[j] + '" onchange="changeValue(' + i + ',' + j + ',this.value)" step="0.01">';
@@ -178,7 +169,7 @@
             const value = Number(input.value);
             if (value !== 0 && !isNaN(value)) {
                 data[index].values.push(value);
-                // syncedLength НЕ меняется — при синхронизации отправится только это новое значение
+                // needsFullUpdate НЕ меняется - это просто добавление
                 saveData(data);
                 input.value = '';
                 render();
@@ -195,8 +186,7 @@
         function changeValue(index, valueIndex, newValue) {
             const data = loadData();
             data[index].values[valueIndex] = Number(newValue);
-            // Сброс syncedLength — при синхронизации отправится ВЕСЬ массив для перезаписи
-            data[index].syncedLength = 0;
+            data[index].needsFullUpdate = true; // Флаг: было редактирование
             saveData(data);
             render();
         }
@@ -204,16 +194,15 @@
         function removeValue(index, valueIndex) {
             const data = loadData();
             data[index].values.splice(valueIndex, 1);
-            // Сброс syncedLength — при синхронизации отправится ВЕСЬ массив для перезаписи
-            data[index].syncedLength = 0;
+            data[index].needsFullUpdate = true; // Флаг: было удаление
             saveData(data);
             render();
         }
 
         function getUnsyncedData() {
             return loadData().filter(item => {
-                const newValues = item.values.slice(item.syncedLength || 0);
-                return newValues.length > 0;
+                const sl = item.syncedLength || 0;
+                return item.values.length > sl;
             });
         }
 
@@ -222,96 +211,57 @@
             data.forEach(item => { 
                 if (item.values.length > 0) {
                     item.syncedLength = item.values.length;
+                    item.needsFullUpdate = false; // Сбрасываем флаг после синхронизации
                 }
             });
             saveData(data);
             render();
         }
 
-        async function sendDataToGoogle(dataToSend) {
-            const rows = dataToSend.map(item => {
-                // Берём ТОЛЬКО новые значения, которые еще не были отправлены
-                const newValues = item.values.slice(item.syncedLength || 0);
-                // Если syncedLength равен 0, значит это полная перезапись (после редактирования/удаления)
-                const isFullUpdate = (item.syncedLength || 0) === 0;
-                
-                console.log('Отправка ID:', item.id, 'Новые значения:', newValues, 'Сумма:', newValues.reduce((s, v) => s + Number(v), 0), 'Полное обновление:', isFullUpdate);
-                
-                return {
-                    id: item.id, 
-                    name: item.name, 
-                    time: item.time,
-                    price: newValues.join('+'), 
-                    quantity: newValues.reduce((sum, val) => sum + Number(val), 0),
-                    isFullUpdate: isFullUpdate
-                };
-            });
+        async function runSync() {
+            const unsynced = getUnsyncedData();
+            if (unsynced.length === 0) return alert('✅ Нет новых данных. Всё уже отправлено.');
+            if (!navigator.onLine) return alert('🔴 Нет интернета!');
             
-            console.log('Всего отправляется записей:', rows.length);
+            const debugInfo = unsynced.map(item => {
+                const sl = item.syncedLength || 0;
+                const newVals = item.values.slice(sl);
+                return `ID:${item.id} Новые:[${newVals.join(',')}] Сумма:${newVals.reduce((s,v)=>s+Number(v),0)} Перезапись:${item.needsFullUpdate}`;
+            }).join('\n');
+            
+            if (!confirm('📤 Отправить данные?\n\n' + debugInfo)) return;
+            
+            const syncBtn = document.querySelector('.sync-btn');
+            syncBtn.disabled = true; syncBtn.textContent = '⏳ Отправка...';
             
             try {
+                const rows = unsynced.map(item => {
+                    const sl = item.syncedLength || 0;
+                    const newValues = item.values.slice(sl);
+                    
+                    return {
+                        id: item.id, 
+                        name: item.name, 
+                        time: item.time,
+                        price: newValues.join('+'), 
+                        quantity: newValues.reduce((sum, val) => sum + Number(val), 0),
+                        isFullUpdate: item.needsFullUpdate // Используем флаг needsFullUpdate
+                    };
+                });
+                
                 await fetch(GOOGLE_SCRIPT_URL, {
                     method: 'POST', mode: 'no-cors',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ data: rows })
                 });
-                return true;
-            } catch (error) { 
-                console.error('Ошибка отправки:', error);
-                return false; 
-            }
-        }
-
-        async function clearGoogleSheet() {
-            try {
-                await fetch(GOOGLE_SCRIPT_URL, {
-                    method: 'POST', mode: 'no-cors',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ action: 'clear' })
-                });
-                return true;
-            } catch (error) { return false; }
-        }
-
-        async function getDataFromGoogle() {
-            try {
-                const response = await fetch(GOOGLE_SCRIPT_URL);
-                const result = await response.json();
-                return result.data;
-            } catch (error) {
-                console.error('Ошибка получения:', error);
-                return null;
-            }
-        }
-
-        function loadSheetJS() {
-            return new Promise((resolve, reject) => {
-                if (typeof XLSX !== 'undefined') { resolve(); return; }
-                const script = document.createElement('script');
-                script.src = 'https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js';
-                script.onload = () => resolve();
-                script.onerror = () => reject(new Error('Не удалось загрузить библиотеку Excel'));
-                document.head.appendChild(script);
-            });
-        }
-
-        async function runSync() {
-            const unsynced = getUnsyncedData();
-            if (unsynced.length === 0) return alert('✅ Нет новых данных. Всё уже отправлено в Google Таблицу.');
-            if (!navigator.onLine) return alert('🔴 Нет интернета! Подключитесь к сети.');
-            if (!confirm('📤 Отправить ' + unsynced.length + ' новых записей в Google Таблицу?')) return;
-            
-            const syncBtn = document.querySelector('.sync-btn');
-            syncBtn.disabled = true; syncBtn.textContent = '⏳ Отправка...';
-            
-            const success = await sendDataToGoogle(unsynced);
-            if (success) { 
+                
                 markAsSynced(); 
                 alert('✅ Данные успешно отправлены!'); 
-            } else { 
-                alert('❌ Ошибка отправки. Проверьте интернет.'); 
+            } catch (error) { 
+                alert('❌ Ошибка отправки: ' + error.message); 
             }
-            syncBtn.disabled = false; syncBtn.textContent = '🔄 Синхронизировать с Google';
+            
+            syncBtn.disabled = false; syncBtn.textContent = ' Синхронизировать с Google';
         }
 
         async function downloadExcel() {
@@ -322,37 +272,50 @@
             exportBtn.disabled = true;
             
             try {
-                const tableData = await getDataFromGoogle();
+                const response = await fetch(GOOGLE_SCRIPT_URL);
+                const result = await response.json();
+                const tableData = result.data;
+                
                 if (!tableData) { alert('❌ Не удалось получить данные.'); return; }
-                await loadSheetJS();
                 
-                const wb = XLSX.utils.book_new();
-                const wsData = [['ID', 'Наименование работ с диапазоном объемов (кг)', 'Норма времени', 'Расценка', 'Количество']];
-                tableData.forEach(item => wsData.push([item.id, item.name, item.time, item.price, item.quantity]));
-                
-                const ws = XLSX.utils.aoa_to_sheet(wsData);
-                ws['!cols'] = [{ wch: 5 }, { wch: 60 }, { wch: 14 }, { wch: 55 }, { wch: 14 }];
-                const range = XLSX.utils.decode_range(ws['!ref']);
-                for (let R = 1; R <= range.e.r; ++R) {
-                    for (let C = 0; C <= range.e.c; ++C) {
-                        const cell = ws[XLSX.utils.encode_cell({r: R, c: C})];
-                        if (cell) {
-                            cell.s = { font: { name: 'Times New Roman', sz: 9 }, alignment: { wrapText: (C === 1 || C === 3), vertical: 'center', horizontal: (C === 0 || C === 2 || C === 4) ? 'center' : 'left' } };
+                const script = document.createElement('script');
+                script.src = 'https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js';
+                script.onload = () => {
+                    const wb = XLSX.utils.book_new();
+                    const wsData = [['ID', 'Наименование работ с диапазоном объемов (кг)', 'Норма времени', 'Расценка', 'Количество']];
+                    tableData.forEach(item => wsData.push([item.id, item.name, item.time, item.price, item.quantity]));
+                    
+                    const ws = XLSX.utils.aoa_to_sheet(wsData);
+                    ws['!cols'] = [{ wch: 5 }, { wch: 60 }, { wch: 14 }, { wch: 55 }, { wch: 14 }];
+                    const range = XLSX.utils.decode_range(ws['!ref']);
+                    for (let R = 1; R <= range.e.r; ++R) {
+                        for (let C = 0; C <= range.e.c; ++C) {
+                            const cell = ws[XLSX.utils.encode_cell({r: R, c: C})];
+                            if (cell) {
+                                cell.s = { font: { name: 'Times New Roman', sz: 9 }, alignment: { wrapText: (C === 1 || C === 3), vertical: 'center', horizontal: (C === 0 || C === 2 || C === 4) ? 'center' : 'left' } };
+                            }
                         }
                     }
-                }
-                for (let C = 0; C <= range.e.c; ++C) {
-                    const cell = ws[XLSX.utils.encode_cell({r: 0, c: C})];
-                    if (cell) cell.s = { font: { name: 'Times New Roman', sz: 10, bold: true }, alignment: { wrapText: true, vertical: 'center', horizontal: 'center' } };
-                }
-                ws['!margins'] = { left: 0.3, right: 0.3, top: 0.3, bottom: 0.3, header: 0.2, footer: 0.2 };
-                ws['!pagesetup'] = { paperSize: 9, orientation: 2, fitToPage: true, fitToWidth: 1, fitToHeight: 1 };
-                XLSX.utils.book_append_sheet(wb, ws, 'Нормы цеха 188');
-                XLSX.writeFile(wb, 'Нормы_188_' + new Date().toISOString().split('T')[0] + '.xlsx');
-                alert('✅ Excel-файл скачан!');
+                    for (let C = 0; C <= range.e.c; ++C) {
+                        const cell = ws[XLSX.utils.encode_cell({r: 0, c: C})];
+                        if (cell) cell.s = { font: { name: 'Times New Roman', sz: 10, bold: true }, alignment: { wrapText: true, vertical: 'center', horizontal: 'center' } };
+                    }
+                    ws['!margins'] = { left: 0.3, right: 0.3, top: 0.3, bottom: 0.3, header: 0.2, footer: 0.2 };
+                    ws['!pagesetup'] = { paperSize: 9, orientation: 2, fitToPage: true, fitToWidth: 1, fitToHeight: 1 };
+                    XLSX.utils.book_append_sheet(wb, ws, 'Нормы цеха 188');
+                    XLSX.writeFile(wb, 'Нормы_188_' + new Date().toISOString().split('T')[0] + '.xlsx');
+                    alert('✅ Excel-файл скачан!');
+                    exportBtn.textContent = originalText;
+                    exportBtn.disabled = false;
+                };
+                script.onerror = () => {
+                    alert('❌ Не удалось загрузить библиотеку Excel.');
+                    exportBtn.textContent = originalText;
+                    exportBtn.disabled = false;
+                };
+                document.head.appendChild(script);
             } catch (error) {
                 alert('❌ Ошибка: ' + error.message);
-            } finally {
                 exportBtn.textContent = originalText;
                 exportBtn.disabled = false;
             }
@@ -366,14 +329,18 @@
             if (!navigator.onLine) return alert('🔴 Нет интернета!');
             
             const clearBtn = document.querySelector('.clear-btn');
-            clearBtn.disabled = true; clearBtn.textContent = '⏳ Очистка...';
+            clearBtn.disabled = true; clearBtn.textContent = ' Очистка...';
             
-            const cleared = await clearGoogleSheet();
-            if (cleared) {
+            try {
+                await fetch(GOOGLE_SCRIPT_URL, {
+                    method: 'POST', mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'clear' })
+                });
                 localStorage.removeItem('shop188_data');
-                alert('🎉 Всё очищено!');
+                alert(' Всё очищено!');
                 location.reload();
-            } else {
+            } catch (error) {
                 alert('❌ Не удалось очистить.');
                 clearBtn.disabled = false; clearBtn.textContent = '🗑️ Очистить всё';
             }
@@ -382,7 +349,7 @@
         function updateStatus() {
             const bar = document.getElementById('status-bar');
             if (navigator.onLine) { bar.textContent = '🟢 Онлайн'; bar.className = 'status-bar'; } 
-            else { bar.textContent = '🔴 Оффлайн - данные сохраняются локально'; bar.className = 'status-bar offline'; }
+            else { bar.textContent = '🔴 Оффлайн'; bar.className = 'status-bar offline'; }
         }
 
         window.addEventListener('online', updateStatus);
