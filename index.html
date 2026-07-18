@@ -49,7 +49,7 @@
 <body>
     <div class="container">
         <h1>📊 Нормы цеха 188</h1>
-        <div class="status-bar" id="status-bar"> Онлайн</div>
+        <div class="status-bar" id="status-bar">🟢 Онлайн</div>
         <div class="counter" id="counter">⏳ Ожидает отправки: 0 записей</div>
         <div id="cards">
             <div class="loading">
@@ -67,7 +67,8 @@
     </div>
 
     <script>
-        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzRJv0lXS4uZW7YU0ydxktW1fW-y7mxiIvb9rbIoDUtkJU2gMaVKxW_imp2h620ymi4/exec';
+        // ✅ ВАША НОВАЯ ССЫЛКА УЖЕ ВСТАВЛЕНА СЮДА
+        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz5pGuK0zexI_H5tKwAd3LrYE5udPGTmWrATZCqOW212sBrCCs74VhvZ4haBjeBVJWA/exec';
 
         const defaultData = [
             {id: 1, name: "10-300 Перемещение, укладка тары эл штабелером", time: 0.28, values: [], syncedLength: 0},
@@ -157,7 +158,7 @@
                 if (item.values.length > 0) {
                     html += '<div class="result">Расценка: ' + item.values.join('+') + '</div>';
                     html += '<div class="total">Количество: ' + sum + '</div>';
-                    html += '<button class="btn btn-edit" onclick="toggleEdit(' + i + ')">️ Редактировать значения</button>';
+                    html += '<button class="btn btn-edit" onclick="toggleEdit(' + i + ')">✏️ Редактировать значения</button>';
                     html += '<div class="edit-section" id="edit-' + i + '">';
                     for (let j = 0; j < item.values.length; j++) {
                         html += '<div class="edit-item"><input type="number" value="' + item.values[j] + '" onchange="changeValue(' + i + ',' + j + ',this.value)" step="0.01">';
@@ -229,8 +230,9 @@
 
         async function sendDataToGoogle(dataToSend) {
             const rows = dataToSend.map(item => {
-                // Берём ТОЛЬКО новые значения
+                // Берём ТОЛЬКО новые значения, которые еще не были отправлены
                 const newValues = item.values.slice(item.syncedLength || 0);
+                // Если syncedLength равен 0, значит это полная перезапись (после редактирования/удаления)
                 const isFullUpdate = (item.syncedLength || 0) === 0;
                 
                 console.log('Отправка ID:', item.id, 'Новые значения:', newValues, 'Сумма:', newValues.reduce((s, v) => s + Number(v), 0), 'Полное обновление:', isFullUpdate);
@@ -364,7 +366,7 @@
             if (!navigator.onLine) return alert('🔴 Нет интернета!');
             
             const clearBtn = document.querySelector('.clear-btn');
-            clearBtn.disabled = true; clearBtn.textContent = ' Очистка...';
+            clearBtn.disabled = true; clearBtn.textContent = '⏳ Очистка...';
             
             const cleared = await clearGoogleSheet();
             if (cleared) {
@@ -373,13 +375,13 @@
                 location.reload();
             } else {
                 alert('❌ Не удалось очистить.');
-                clearBtn.disabled = false; clearBtn.textContent = '️ Очистить всё';
+                clearBtn.disabled = false; clearBtn.textContent = '🗑️ Очистить всё';
             }
         }
 
         function updateStatus() {
             const bar = document.getElementById('status-bar');
-            if (navigator.onLine) { bar.textContent = ' Онлайн'; bar.className = 'status-bar'; } 
+            if (navigator.onLine) { bar.textContent = '🟢 Онлайн'; bar.className = 'status-bar'; } 
             else { bar.textContent = '🔴 Оффлайн - данные сохраняются локально'; bar.className = 'status-bar offline'; }
         }
 
