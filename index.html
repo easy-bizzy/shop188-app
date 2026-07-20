@@ -45,14 +45,14 @@
 <body>
     <div class="container">
         <h1>📊 Нормы цеха 188</h1>
-        <div class="status-bar" id="status-bar">🟢 Онлайн</div>
+        <div class="status-bar" id="status-bar"> Онлайн</div>
         <div class="counter" id="counter">⏳ Ожидает отправки: 0 записей</div>
         <div id="cards"></div>
 
         <div class="actions-block">
             <h3>⚙️ Действия</h3>
             <button class="action-btn sync-btn" onclick="runSync()">🔄 Синхронизировать с Google</button>
-            <button class="action-btn export-btn" onclick="downloadExcel()"> Скачать Excel из Google Таблицы</button>
+            <button class="action-btn export-btn" onclick="downloadExcel()">📥 Скачать Excel из Google Таблицы</button>
             <button class="action-btn clear-btn" onclick="clearAll()">🗑️ Очистить всё</button>
         </div>
     </div>
@@ -153,7 +153,7 @@
                     html += '<div class="edit-section" id="edit-' + i + '">';
                     for (let j = 0; j < item.values.length; j++) {
                         html += '<div class="edit-item"><input type="number" value="' + item.values[j] + '" onchange="changeValue(' + i + ',' + j + ',this.value)" step="0.01">';
-                        html += '<button class="btn-remove" onclick="removeValue(' + i + ',' + j + ')">🗑️</button></div>';
+                        html += '<button class="btn-remove" onclick="removeValue(' + i + ',' + j + ')">️</button></div>';
                     }
                     html += '<button class="btn btn-save" onclick="toggleEdit(' + i + ')">Закрыть</button></div>';
                 }
@@ -169,7 +169,6 @@
             const value = Number(input.value);
             if (value !== 0 && !isNaN(value)) {
                 data[index].values.push(value);
-                // needsFullUpdate НЕ меняется - это просто добавление
                 saveData(data);
                 input.value = '';
                 render();
@@ -186,7 +185,7 @@
         function changeValue(index, valueIndex, newValue) {
             const data = loadData();
             data[index].values[valueIndex] = Number(newValue);
-            data[index].needsFullUpdate = true; // Флаг: было редактирование
+            data[index].needsFullUpdate = true;
             saveData(data);
             render();
         }
@@ -194,7 +193,7 @@
         function removeValue(index, valueIndex) {
             const data = loadData();
             data[index].values.splice(valueIndex, 1);
-            data[index].needsFullUpdate = true; // Флаг: было удаление
+            data[index].needsFullUpdate = true;
             saveData(data);
             render();
         }
@@ -211,7 +210,7 @@
             data.forEach(item => { 
                 if (item.values.length > 0) {
                     item.syncedLength = item.values.length;
-                    item.needsFullUpdate = false; // Сбрасываем флаг после синхронизации
+                    item.needsFullUpdate = false;
                 }
             });
             saveData(data);
@@ -245,7 +244,7 @@
                         time: item.time,
                         price: newValues.join('+'), 
                         quantity: newValues.reduce((sum, val) => sum + Number(val), 0),
-                        isFullUpdate: item.needsFullUpdate // Используем флаг needsFullUpdate
+                        isFullUpdate: item.needsFullUpdate
                     };
                 });
                 
@@ -261,64 +260,11 @@
                 alert('❌ Ошибка отправки: ' + error.message); 
             }
             
-            syncBtn.disabled = false; syncBtn.textContent = ' Синхронизировать с Google';
+            syncBtn.disabled = false; syncBtn.textContent = '🔄 Синхронизировать с Google';
         }
 
-        async function downloadExcel() {
-            if (!navigator.onLine) return alert('🔴 Для скачивания Excel нужен интернет!');
-            const exportBtn = document.querySelector('.export-btn');
-            const originalText = exportBtn.textContent;
-            exportBtn.textContent = '⏳ Загрузка...';
-            exportBtn.disabled = true;
-            
-            try {
-                const response = await fetch(GOOGLE_SCRIPT_URL);
-                const result = await response.json();
-                const tableData = result.data;
-                
-                if (!tableData) { alert('❌ Не удалось получить данные.'); return; }
-                
-                const script = document.createElement('script');
-                script.src = 'https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js';
-                script.onload = () => {
-                    const wb = XLSX.utils.book_new();
-                    const wsData = [['ID', 'Наименование работ с диапазоном объемов (кг)', 'Норма времени', 'Расценка', 'Количество']];
-                    tableData.forEach(item => wsData.push([item.id, item.name, item.time, item.price, item.quantity]));
-                    
-                    const ws = XLSX.utils.aoa_to_sheet(wsData);
-                    ws['!cols'] = [{ wch: 5 }, { wch: 60 }, { wch: 14 }, { wch: 55 }, { wch: 14 }];
-                    const range = XLSX.utils.decode_range(ws['!ref']);
-                    for (let R = 1; R <= range.e.r; ++R) {
-                        for (let C = 0; C <= range.e.c; ++C) {
-                            const cell = ws[XLSX.utils.encode_cell({r: R, c: C})];
-                            if (cell) {
-                                cell.s = { font: { name: 'Times New Roman', sz: 9 }, alignment: { wrapText: (C === 1 || C === 3), vertical: 'center', horizontal: (C === 0 || C === 2 || C === 4) ? 'center' : 'left' } };
-                            }
-                        }
-                    }
-                    for (let C = 0; C <= range.e.c; ++C) {
-                        const cell = ws[XLSX.utils.encode_cell({r: 0, c: C})];
-                        if (cell) cell.s = { font: { name: 'Times New Roman', sz: 10, bold: true }, alignment: { wrapText: true, vertical: 'center', horizontal: 'center' } };
-                    }
-                    ws['!margins'] = { left: 0.3, right: 0.3, top: 0.3, bottom: 0.3, header: 0.2, footer: 0.2 };
-                    ws['!pagesetup'] = { paperSize: 9, orientation: 2, fitToPage: true, fitToWidth: 1, fitToHeight: 1 };
-                    XLSX.utils.book_append_sheet(wb, ws, 'Нормы цеха 188');
-                    XLSX.writeFile(wb, 'Нормы_188_' + new Date().toISOString().split('T')[0] + '.xlsx');
-                    alert('✅ Excel-файл скачан!');
-                    exportBtn.textContent = originalText;
-                    exportBtn.disabled = false;
-                };
-                script.onerror = () => {
-                    alert('❌ Не удалось загрузить библиотеку Excel.');
-                    exportBtn.textContent = originalText;
-                    exportBtn.disabled = false;
-                };
-                document.head.appendChild(script);
-            } catch (error) {
-                alert('❌ Ошибка: ' + error.message);
-                exportBtn.textContent = originalText;
-                exportBtn.disabled = false;
-            }
+        function downloadExcel() {
+            alert('⚠️ Для скачивания Excel нужен интернет!\n\nПодключитесь к сети и откройте приложение снова.');
         }
 
         async function clearAll() {
@@ -329,7 +275,7 @@
             if (!navigator.onLine) return alert('🔴 Нет интернета!');
             
             const clearBtn = document.querySelector('.clear-btn');
-            clearBtn.disabled = true; clearBtn.textContent = ' Очистка...';
+            clearBtn.disabled = true; clearBtn.textContent = '⏳ Очистка...';
             
             try {
                 await fetch(GOOGLE_SCRIPT_URL, {
@@ -338,7 +284,7 @@
                     body: JSON.stringify({ action: 'clear' })
                 });
                 localStorage.removeItem('shop188_data');
-                alert(' Всё очищено!');
+                alert('🎉 Всё очищено!');
                 location.reload();
             } catch (error) {
                 alert('❌ Не удалось очистить.');
@@ -349,7 +295,7 @@
         function updateStatus() {
             const bar = document.getElementById('status-bar');
             if (navigator.onLine) { bar.textContent = '🟢 Онлайн'; bar.className = 'status-bar'; } 
-            else { bar.textContent = '🔴 Оффлайн'; bar.className = 'status-bar offline'; }
+            else { bar.textContent = ' Оффлайн'; bar.className = 'status-bar offline'; }
         }
 
         window.addEventListener('online', updateStatus);
